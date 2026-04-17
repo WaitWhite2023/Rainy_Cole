@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Role {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  users     User[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  nickname     String
+  status       String   @default("active")
+  roleId       String
+  role         Role     @relation(fields: [roleId], references: [id])
+  posts        Post[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Post {
+  id             String         @id @default(cuid())
+  title          String
+  slug           String         @unique
+  summary        String         @db.Text
+  content        String         @db.Text
+  coverUrl       String?
+  status         PostStatus     @default(DRAFT)
+  isTop          Boolean        @default(false)
+  contentType    String         @default("markdown")
+  sourceType     PostSourceType @default(DATABASE)
+  sourcePath     String?
+  publishedAt    DateTime?
+  seoTitle       String?
+  seoDescription String?
+  viewCount      Int            @default(0)
+  authorId       String
+  author         User           @relation(fields: [authorId], references: [id])
+  categories     PostCategory[]
+  tags           PostTag[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+}
+
+model Category {
+  id        String         @id @default(cuid())
+  name      String
+  slug      String         @unique
+  posts     PostCategory[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String    @unique
+  posts     PostTag[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model PostCategory {
+  postId     String
+  categoryId String
+  post       Post     @relation(fields: [postId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  @@id([postId, categoryId])
+}
+
+model PostTag {
+  postId String
+  tagId  String
+  post   Post @relation(fields: [postId], references: [id])
+  tag    Tag  @relation(fields: [tagId], references: [id])
+
+  @@id([postId, tagId])
+}
+
+model Asset {
+  id         String   @id @default(cuid())
+  filename   String
+  path       String
+  mimeType   String
+  size       Int
+  uploadedBy String
+  createdAt  DateTime @default(now())
+}
+
+model SiteSetting {
+  id                    String   @id @default(cuid())
+  siteName              String
+  subtitle              String
+  aboutContent          String   @db.Text
+  seoDefaultTitle       String
+  seoDefaultDescription String
+  socialLinks           Json
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PostSourceType {
+  DATABASE
+  MARKDOWN
+}
