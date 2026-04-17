@@ -6,6 +6,8 @@ coverage
 .env
 .env.local
 .env.production
+.env.docker
+.pnpm-store
 apps/*/dist
 apps/api/generated
 apps/api/uploads

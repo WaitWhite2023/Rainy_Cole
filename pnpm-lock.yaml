@@ -90,6 +90,9 @@ importers:
       class-validator:
         specifier: ^0.14.1
         version: 0.14.4
+      dotenv:
+        specifier: ^16.4.7
+        version: 16.6.1
       gray-matter:
         specifier: ^4.0.3
         version: 4.0.3

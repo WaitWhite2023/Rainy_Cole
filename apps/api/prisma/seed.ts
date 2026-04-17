@@ -1,8 +1,14 @@
 import 'dotenv/config';
+import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
+import { Pool } from 'pg';
 import { hashPassword } from '../src/common/utils/password.util';
 
-const prisma = new PrismaClient();
+const connectionString =
+  process.env.DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/rainy_cole?schema=public';
+const pool = new Pool({ connectionString });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
 
 async function main() {
   const adminRole = await prisma.role.upsert({
