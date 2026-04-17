@@ -5,6 +5,23 @@ export interface LoginDto {
   password: string;
 }
 
+export interface RefreshTokenDto {
+  refreshToken: string;
+}
+
+export interface AuthUserDto {
+  id: string;
+  username: string;
+  nickname: string;
+  role: UserRole;
+}
+
+export interface AuthTokensDto {
+  accessToken: string;
+  refreshToken: string;
+  user: AuthUserDto;
+}
+
 export interface PostListItemDto {
   id: string;
   title: string;
@@ -39,6 +56,25 @@ export interface CreatePostDto {
 }
 
 export interface UpdatePostDto extends Partial<CreatePostDto> {}
+
+export interface CategoryDto {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface TagDto {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface CreateTaxonomyDto {
+  name: string;
+  slug: string;
+}
+
+export interface UpdateTaxonomyDto extends Partial<CreateTaxonomyDto> {}
 
 export interface UserSummaryDto {
   id: string;

@@ -1,18 +1,213 @@
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,700&family=Manrope:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  color: #1c1917;
-  background: #f5f5f4;
-  font-family: "PingFang SC", "Noto Sans SC", sans-serif;
+  --admin-bg: #07090d;
+  --admin-bg-soft: #0d1118;
+  --admin-panel: rgba(255, 255, 255, 0.045);
+  --admin-line: rgba(255, 255, 255, 0.08);
+  --admin-text: rgba(247, 248, 250, 0.96);
+  --admin-muted: rgba(255, 255, 255, 0.58);
+  --admin-accent: #d3b991;
+  color: var(--admin-text);
+  background:
+    radial-gradient(circle at 12% 16%, rgba(179, 145, 98, 0.18), transparent 24%),
+    radial-gradient(circle at 82% 10%, rgba(87, 111, 158, 0.18), transparent 26%),
+    linear-gradient(180deg, #080b11 0%, #05070b 100%);
+  font-family: 'Manrope', 'PingFang SC', sans-serif;
 }
 
 body {
   margin: 0;
+  min-width: 320px;
+  background: transparent;
+  color: var(--admin-text);
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.admin-shell {
+  position: relative;
+  overflow: hidden;
+  background: transparent;
+}
+
+.admin-shell::before {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 72px 72px;
+  opacity: 0.22;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 90%);
+}
+
+.admin-orb {
+  position: fixed;
+  z-index: 0;
+  border-radius: 999px;
+  filter: blur(90px);
+  pointer-events: none;
+}
+
+.admin-orb-left {
+  left: -9rem;
+  top: 8rem;
+  height: 24rem;
+  width: 24rem;
+  background: rgba(185, 160, 122, 0.2);
+}
+
+.admin-orb-right {
+  right: -10rem;
+  top: 3rem;
+  height: 28rem;
+  width: 28rem;
+  background: rgba(83, 110, 159, 0.14);
+}
+
+.admin-topbar,
+.admin-hero,
+.admin-panel,
+.admin-metric-card {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.03));
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(22px);
+}
+
+.admin-nav-link {
+  display: flex;
+  align-items: center;
+  min-height: 3.2rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0 1rem;
+  color: rgba(255, 255, 255, 0.65);
+  transition: all 220ms ease;
+}
+
+.admin-nav-link:hover,
+.router-link-active.admin-nav-link {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.admin-eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.36);
+}
+
+.admin-metric-card {
+  border-radius: 1.6rem;
+  border: 1px solid var(--admin-line);
+  padding: 1.4rem;
+}
+
+.admin-check-row {
+  display: grid;
+  grid-template-columns: 3rem 1fr;
+  align-items: start;
+  gap: 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 1rem;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.admin-check-row span {
+  font-family: 'Bodoni Moda', serif;
+  color: var(--admin-accent);
+}
+
+.el-card {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.el-form-item__label {
+  color: rgba(255, 255, 255, 0.62) !important;
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+  border-radius: 1rem !important;
+  background: rgba(255, 255, 255, 0.05) !important;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08) !important;
+  color: white !important;
+}
+
+.el-input__inner,
+.el-textarea__inner {
+  color: white !important;
+}
+
+.el-input__inner::placeholder,
+.el-textarea__inner::placeholder {
+  color: rgba(255, 255, 255, 0.34) !important;
+}
+
+.el-button--default {
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: white !important;
+}
+
+.el-button--primary {
+  border-color: transparent !important;
+  background: linear-gradient(135deg, rgba(221, 199, 168, 0.96), rgba(184, 154, 114, 0.92)) !important;
+  color: #17110d !important;
+}
+
+.admin-table {
+  --el-table-bg-color: transparent;
+  --el-table-tr-bg-color: transparent;
+  --el-table-header-bg-color: transparent;
+  --el-table-border-color: rgba(255, 255, 255, 0.08);
+  --el-table-text-color: rgba(255, 255, 255, 0.74);
+  --el-table-header-text-color: rgba(255, 255, 255, 0.44);
+  --el-table-row-hover-bg-color: rgba(255, 255, 255, 0.035);
+}
+
+.admin-table .el-table__inner-wrapper::before,
+.admin-table::before {
+  display: none !important;
+}
+
+.admin-table .el-table__cell {
+  background: transparent !important;
+}
+
+@media (max-width: 1024px) {
+  .admin-shell aside {
+    position: static;
+    width: auto;
+    border-right: 0;
+  }
+
+  .admin-shell main {
+    margin-left: 0;
+  }
 }

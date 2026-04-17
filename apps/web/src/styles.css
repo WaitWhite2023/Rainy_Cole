@@ -1,18 +1,328 @@
+@import url('https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,700&family=Manrope:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  color: #1c1917;
-  background: #f8f6f1;
-  font-family: "PingFang SC", "Noto Serif SC", serif;
+  --bg: #070a10;
+  --bg-soft: #0d1118;
+  --panel: rgba(255, 255, 255, 0.04);
+  --panel-strong: rgba(255, 255, 255, 0.07);
+  --line: rgba(255, 255, 255, 0.1);
+  --text: rgba(245, 247, 250, 0.94);
+  --muted: rgba(255, 255, 255, 0.58);
+  --accent: #d1bfa0;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 15% 18%, rgba(154, 124, 86, 0.22), transparent 26%),
+    radial-gradient(circle at 78% 8%, rgba(103, 132, 181, 0.16), transparent 24%),
+    radial-gradient(circle at 50% 80%, rgba(255, 255, 255, 0.05), transparent 28%),
+    linear-gradient(180deg, #090d13 0%, #05070b 100%);
+  font-family: 'Manrope', 'PingFang SC', sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
+  min-width: 320px;
+  color: var(--text);
+  background: transparent;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.site-shell {
+  position: relative;
+  overflow: hidden;
+}
+
+.site-shell::before {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.35), transparent 90%);
+  opacity: 0.28;
+}
+
+.ambient-orb {
+  position: fixed;
+  z-index: 0;
+  border-radius: 999px;
+  filter: blur(90px);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.ambient-orb-left {
+  left: -8rem;
+  top: 6rem;
+  height: 24rem;
+  width: 24rem;
+  background: rgba(189, 149, 99, 0.24);
+}
+
+.ambient-orb-right {
+  right: -9rem;
+  top: 12rem;
+  height: 26rem;
+  width: 26rem;
+  background: rgba(93, 117, 168, 0.18);
+}
+
+.font-display {
+  font-family: 'Bodoni Moda', 'Songti SC', serif;
+}
+
+.hero-panel,
+.section-card,
+.glass-card {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.025));
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.28);
+}
+
+.hero-panel::after,
+.section-card::after,
+.glass-card::after {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  content: "";
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), transparent 26%, transparent 72%, rgba(255, 255, 255, 0.03));
+}
+
+.section-card {
+  border-radius: 1.75rem;
+  padding: 1.75rem;
+}
+
+.glass-card {
+  border-radius: 1.4rem;
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.nav-link {
+  border-radius: 999px;
+  border: 1px solid transparent;
+  padding: 0.65rem 1rem;
+  transition: all 220ms ease;
+}
+
+.nav-link:hover,
+.router-link-active.nav-link {
+  border-color: rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+}
+
+.cta-primary,
+.cta-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.1rem;
+  border-radius: 999px;
+  padding: 0 1.35rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  transition: transform 220ms ease, background 220ms ease, border-color 220ms ease;
+}
+
+.cta-primary {
+  background: linear-gradient(135deg, rgba(220, 200, 171, 0.96), rgba(182, 153, 114, 0.92));
+  color: #17110d;
+}
+
+.cta-secondary {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: white;
+}
+
+.cta-primary:hover,
+.cta-secondary:hover {
+  transform: translateY(-1px);
+}
+
+.metric-value {
+  font-family: 'Bodoni Moda', serif;
+  font-size: 2.3rem;
+  color: white;
+}
+
+.metric-label {
+  margin-top: 0.45rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.42);
+}
+
+.section-title {
+  margin-top: 0.55rem;
+  font-family: 'Bodoni Moda', serif;
+  font-size: clamp(1.85rem, 3vw, 2.7rem);
+  color: white;
+}
+
+.section-link {
+  font-size: 0.88rem;
+  color: var(--accent);
+}
+
+.story-row {
+  display: grid;
+  gap: 0.9rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 1.2rem;
+}
+
+.story-meta {
+  font-size: 0.72rem;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.story-title {
+  margin-top: 0.4rem;
+  font-family: 'Bodoni Moda', serif;
+  line-height: 1.12;
+  color: white;
+}
+
+.story-summary {
+  font-size: 0.95rem;
+  line-height: 1.9;
+  color: rgba(255, 255, 255, 0.58);
+}
+
+.tag-card,
+.mini-panel,
+.filter-chip {
+  border-radius: 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.035);
+}
+
+.tag-card {
+  padding: 1.2rem;
+}
+
+.tag-card-title {
+  font-size: 1.05rem;
+  color: white;
+}
+
+.tag-card-copy {
+  margin-top: 0.75rem;
+  font-size: 0.92rem;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.mini-panel {
+  padding: 1.25rem;
+}
+
+.mini-panel-value {
+  font-family: 'Bodoni Moda', serif;
+  font-size: 2rem;
+  color: var(--accent);
+}
+
+.mini-panel-title {
+  margin-top: 0.45rem;
+  font-size: 1rem;
+  color: white;
+}
+
+.mini-panel-copy {
+  margin-top: 0.7rem;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.filter-chip {
+  padding: 0.95rem 1rem;
+  font-size: 0.92rem;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.article-preview:hover,
+.tag-card:hover,
+.mini-panel:hover,
+.story-row:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.reading-surface {
+  font-size: 1.05rem;
+  line-height: 2;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.reading-surface p + p {
+  margin-top: 1.4rem;
+}
+
+.search-input {
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 1rem 1.3rem;
+  color: white;
+  outline: none;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.search-input::placeholder {
+  color: rgba(255, 255, 255, 0.36);
+}
+
+.search-input:focus {
+  border-color: rgba(209, 191, 160, 0.4);
+  box-shadow: 0 0 0 4px rgba(209, 191, 160, 0.08);
+}
+
+@media (max-width: 640px) {
+  .section-card {
+    padding: 1.2rem;
+    border-radius: 1.35rem;
+  }
+
+  .hero-panel {
+    border-radius: 1.5rem;
+  }
 }

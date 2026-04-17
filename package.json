@@ -5,6 +5,11 @@
   "packageManager": "pnpm@10.15.1",
   "scripts": {
     "dev": "turbo run dev --parallel",
+    "dev:all": "pnpm dev",
+    "dev:web": "pnpm --filter @rainy/web dev",
+    "dev:admin": "pnpm --filter @rainy/admin dev",
+    "dev:api": "pnpm --filter @rainy/api dev",
+    "dev:frontend": "turbo run dev --parallel --filter @rainy/web --filter @rainy/admin",
     "build": "turbo run build",
     "lint": "turbo run lint",
     "test": "turbo run test",
@@ -12,9 +17,18 @@
     "format:write": "prettier --write .",
     "db:generate": "pnpm --filter @rainy/api prisma:generate",
     "db:migrate": "pnpm --filter @rainy/api prisma:migrate",
+    "db:deploy": "pnpm --filter @rainy/api prisma:deploy",
     "db:seed": "pnpm --filter @rainy/api prisma:seed",
-    "docker:up": "docker compose -f infra/docker/docker-compose.yml up -d --build",
-    "docker:down": "docker compose -f infra/docker/docker-compose.yml down"
+    "db:setup": "pnpm db:generate && pnpm db:deploy && pnpm db:seed",
+    "db:generate:docker": "DOTENV_CONFIG_PATH=../../.env.docker pnpm --filter @rainy/api prisma:generate",
+    "db:migrate:docker": "DOTENV_CONFIG_PATH=../../.env.docker pnpm --filter @rainy/api prisma:migrate",
+    "db:deploy:docker": "DOTENV_CONFIG_PATH=../../.env.docker pnpm --filter @rainy/api prisma:deploy",
+    "db:seed:docker": "DOTENV_CONFIG_PATH=../../.env.docker pnpm --filter @rainy/api prisma:seed",
+    "db:setup:docker": "pnpm db:generate:docker && pnpm db:deploy:docker && pnpm db:seed:docker",
+    "docker:up": "docker compose --env-file .env.docker -f infra/docker/docker-compose.yml up -d --build",
+    "docker:down": "docker compose --env-file .env.docker -f infra/docker/docker-compose.yml down",
+    "docker:up:legacy": "docker-compose --env-file .env.docker -f infra/docker/docker-compose.yml up -d --build",
+    "docker:down:legacy": "docker-compose --env-file .env.docker -f infra/docker/docker-compose.yml down"
   },
   "devDependencies": {
     "prettier": "^3.3.3",

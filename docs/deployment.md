@@ -23,10 +23,13 @@
 ## 4. 部署步骤
 
 1. 安装 Docker 与 Docker Compose
-2. 复制 `.env.example` 为 `.env.production`
-3. 按服务器实际情况修改数据库密码、JWT 密钥、域名与端口
-4. 执行 `docker compose -f infra/docker/docker-compose.yml up -d --build`
-5. 检查容器状态与 Nginx 代理结果
+2. 本机直跑时复制 `.env.example` 为 `.env`
+3. Docker Compose 方式联调时复制 `.env.docker.example` 为 `.env.docker`
+4. 按服务器实际情况修改数据库密码、JWT 密钥、域名与端口
+5. 新版 Docker 使用 `docker compose --env-file .env.docker -f infra/docker/docker-compose.yml up -d --build`
+6. 若本机只有旧版 Compose，可改用 `docker-compose --env-file .env.docker -f infra/docker/docker-compose.yml up -d --build`
+7. 检查容器状态与 Nginx 代理结果
+8. 若需要从宿主机执行 Prisma 初始化，但数据库跑在 Docker 容器中，请使用 `pnpm db:setup:docker`
 
 ## 5. 建议目录与挂载
 
@@ -40,3 +43,7 @@
 - 将上传目录与数据库目录挂载到宿主机
 - 给 PostgreSQL 和 Meilisearch 配置持久化卷
 - 通过 Nginx 限制上传大小并开启 gzip
+- Docker Compose 场景下，`DATABASE_URL` 中的数据库主机必须写成 `postgres`，因为容器之间通过服务名通信
+- 不要把本机直跑用的 `.env` 直接复用给 Compose；两者的数据库主机不同
+- `pnpm db:setup` 默认读取 `.env`
+- `pnpm db:setup:docker` 默认读取 `.env.docker`

@@ -4,6 +4,14 @@ import ElementPlus from 'element-plus';
 import 'element-plus/dist/index.css';
 import App from './App.vue';
 import router from './router';
+import { useAuthStore } from './stores/auth';
 import './styles.css';
 
-createApp(App).use(createPinia()).use(router).use(ElementPlus).mount('#app');
+const app = createApp(App);
+const pinia = createPinia();
+
+app.use(pinia).use(router).use(ElementPlus);
+
+useAuthStore(pinia).hydrate();
+
+app.mount('#app');

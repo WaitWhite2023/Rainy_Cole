@@ -1,12 +1,37 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import type { CreateTaxonomyDto, UpdateTaxonomyDto } from '@rainy/shared';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { CategoriesService } from './categories.service';
 
-@Controller('categories')
+@Controller()
 export class CategoriesController {
-  @Get()
-  findAll() {
-    return [
-      { id: 'cat-1', name: '公告', slug: 'announcement' },
-      { id: 'cat-2', name: '技术', slug: 'tech' }
-    ];
+  constructor(private readonly categoriesService: CategoriesService) {}
+
+  @Get('categories')
+  async findAll() {
+    return this.categoriesService.findAll();
+  }
+
+  @Post('admin/categories')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'editor')
+  async create(@Body() payload: CreateTaxonomyDto) {
+    return this.categoriesService.create(payload);
+  }
+
+  @Patch('admin/categories/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'editor')
+  async update(@Param('id') id: string, @Body() payload: UpdateTaxonomyDto) {
+    return this.categoriesService.update(id, payload);
+  }
+
+  @Delete('admin/categories/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin', 'editor')
+  async remove(@Param('id') id: string) {
+    return this.categoriesService.remove(id);
   }
 }

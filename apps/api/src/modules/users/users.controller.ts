@@ -1,12 +1,17 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { UsersService } from './users.service';
 
 @Controller('admin/users')
 export class UsersController {
+  constructor(private readonly usersService: UsersService) {}
+
   @Get()
-  findAll() {
-    return [
-      { id: '1', username: 'admin', nickname: '管理员', role: 'admin' },
-      { id: '2', username: 'editor', nickname: '编辑', role: 'editor' }
-    ];
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  async findAll() {
+    return this.usersService.findAll();
   }
 }
