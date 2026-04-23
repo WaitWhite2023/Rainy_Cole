@@ -71,10 +71,19 @@ async function handleUpload(event: Event) {
   const file = input.files?.[0];
   if (!file) return;
 
-  const result = await uploadAsset(file);
-  if (result.url) {
-    form.coverUrl = result.url;
-    ElMessage.success('封面上传成功');
+  try {
+    const result = await uploadAsset(file);
+    if (result.url) {
+      form.coverUrl = result.url;
+      ElMessage.success('封面上传成功');
+      return;
+    }
+
+    ElMessage.warning('上传完成，但未返回可用地址');
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '封面上传失败');
+  } finally {
+    input.value = '';
   }
 }
 

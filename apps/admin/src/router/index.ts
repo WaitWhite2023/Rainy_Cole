@@ -7,6 +7,7 @@ import PostManagePage from '../pages/PostManagePage.vue';
 import PostEditorPage from '../pages/PostEditorPage.vue';
 import SettingsPage from '../pages/SettingsPage.vue';
 import { useAuthStore } from '../stores/auth';
+import type { UserRole } from '@rainy/shared';
 
 const router = createRouter({
   history: createWebHistory('/admin/'),
@@ -21,7 +22,7 @@ const router = createRouter({
         { path: 'posts', component: PostManagePage },
         { path: 'posts/new', component: PostEditorPage },
         { path: 'posts/:id/edit', component: PostEditorPage },
-        { path: 'settings', component: SettingsPage }
+        { path: 'settings', component: SettingsPage, meta: { roles: ['admin'] as UserRole[] } }
       ]
     }
   ]
@@ -33,6 +34,13 @@ router.beforeEach((to) => {
 
   if (to.meta.requiresAuth && !isAuthenticated.value) {
     return '/login';
+  }
+
+  const requiredRoles = to.meta.roles as UserRole[] | undefined;
+  const currentRole = authStore.user?.role;
+
+  if (requiredRoles?.length && (!currentRole || !requiredRoles.includes(currentRole))) {
+    return '/';
   }
 
   if (to.meta.guestOnly && isAuthenticated.value) {

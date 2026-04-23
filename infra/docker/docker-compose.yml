@@ -3,6 +3,8 @@ services:
     image: node:22-alpine
     working_dir: /workspace
     command: sh -c "corepack enable && pnpm --filter @rainy/web dev --host 0.0.0.0"
+    environment:
+      VITE_API_PROXY_TARGET: http://host.docker.internal:3000
     volumes:
       - ../../:/workspace
       - workspace_node_modules:/workspace/node_modules
@@ -13,6 +15,8 @@ services:
     image: node:22-alpine
     working_dir: /workspace
     command: sh -c "corepack enable && pnpm --filter @rainy/admin dev --host 0.0.0.0"
+    environment:
+      VITE_API_PROXY_TARGET: http://host.docker.internal:3000
     volumes:
       - ../../:/workspace
       - workspace_node_modules:/workspace/node_modules

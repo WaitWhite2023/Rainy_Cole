@@ -102,9 +102,26 @@ export class AuthService {
   }
 
   private isDatabaseBootstrapError(error: unknown) {
-    return (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      ['P2021', 'P1001'].includes(error.code)
-    );
+    const errorMessage = error instanceof Error ? error.message : '';
+    const prismaCode =
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      typeof (error as { code?: unknown }).code === 'string'
+        ? ((error as { code: string }).code as string)
+        : null;
+
+    if (prismaCode) {
+      return ['P2021', 'P1001'].includes(prismaCode);
+    }
+
+    if (
+      /P2021|P1001/.test(errorMessage) ||
+      /does not exist|relation .* does not exist|can'?t reach database server/i.test(errorMessage)
+    ) {
+      return true;
+    }
+
+    return error instanceof Prisma.PrismaClientKnownRequestError && ['P2021', 'P1001'].includes(error.code);
   }
 }

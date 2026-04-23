@@ -1,28 +1,34 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { useAuthStore } from '../stores/auth';
 import { apiGet } from '../services/api';
 import { fetchAdminPosts, fetchCategories, fetchTags } from '../services/content';
 
+const authStore = useAuthStore();
 const cards = ref([
   { label: '文章总数', value: 0 },
   { label: '分类数量', value: 0 },
   { label: '标签数量', value: 0 },
-  { label: '后台用户', value: 0 }
+  { label: '后台用户', value: 0 as number | string }
 ]);
 
 onMounted(async () => {
-  const [posts, categories, tags, users] = await Promise.all([
+  const [posts, categories, tags] = await Promise.all([
     fetchAdminPosts(),
     fetchCategories(),
-    fetchTags(),
-    apiGet<Array<unknown>>('/admin/users', true)
+    fetchTags()
   ]);
+
+  const usersCount =
+    authStore.user?.role === 'admin'
+      ? (await apiGet<Array<unknown>>('/admin/users', true)).length
+      : '-';
 
   cards.value = [
     { label: '文章总数', value: posts.length },
     { label: '分类数量', value: categories.length },
     { label: '标签数量', value: tags.length },
-    { label: '后台用户', value: users.length }
+    { label: '后台用户', value: usersCount }
   ];
 });
 </script>

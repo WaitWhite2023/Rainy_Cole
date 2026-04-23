@@ -1,52 +1,156 @@
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import { RouterLink } from 'vue-router';
+import type { CategoryDto, PostListItemDto, TagDto } from '@rainy/shared';
+import { fetchCategories, fetchPosts, fetchTags } from '../services/content';
+
+type SortMode = 'newest' | 'oldest' | 'title';
+type ViewMode = 'list' | 'grid';
+
+const loading = ref(false);
+const errorMessage = ref('');
+const posts = ref<PostListItemDto[]>([]);
+const categories = ref<CategoryDto[]>([]);
+const tags = ref<TagDto[]>([]);
+
+const keyword = ref('');
+const activeCategory = ref('');
+const activeTag = ref('');
+const sortMode = ref<SortMode>('newest');
+const viewMode = ref<ViewMode>('list');
+
+const filteredPosts = computed(() =>
+  posts.value.filter((post) => {
+    const categoryMatched =
+      !activeCategory.value || post.categories.some((category) => category === activeCategory.value);
+    const tagMatched = !activeTag.value || post.tags.some((tag) => tag === activeTag.value);
+    const key = keyword.value.trim().toLowerCase();
+    const keywordMatched =
+      !key || post.title.toLowerCase().includes(key) || post.summary.toLowerCase().includes(key);
+    return categoryMatched && tagMatched && keywordMatched;
+  })
+);
+
+const sortedPosts = computed(() => {
+  const items = [...filteredPosts.value];
+  if (sortMode.value === 'title') {
+    return items.sort((a, b) => a.title.localeCompare(b.title, 'zh-Hans-CN'));
+  }
+  return items.sort((a, b) => {
+    const ta = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+    const tb = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+    return sortMode.value === 'newest' ? tb - ta : ta - tb;
+  });
+});
+
+function formatDate(value?: string) {
+  if (!value) return '未发布';
+  return new Date(value).toLocaleDateString('zh-CN');
+}
+
+function clearFilters() {
+  keyword.value = '';
+  activeCategory.value = '';
+  activeTag.value = '';
+}
+
+async function bootstrap() {
+  loading.value = true;
+  errorMessage.value = '';
+  try {
+    const [postList, categoryList, tagList] = await Promise.all([
+      fetchPosts(),
+      fetchCategories(),
+      fetchTags()
+    ]);
+    posts.value = postList;
+    categories.value = categoryList;
+    tags.value = tagList;
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '文章加载失败';
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(bootstrap);
+</script>
+
 <template>
-  <section class="space-y-8">
-    <header class="section-card grid gap-6 lg:grid-cols-[1.15fr_0.85fr] lg:items-end">
-      <div>
-        <p class="eyebrow">Archive</p>
-        <h1 class="font-display text-4xl leading-tight text-white sm:text-5xl">文章列表</h1>
+  <section>
+    <section class="page-hero">
+      <div class="page-hero-inner">
+        <p class="page-kicker">Post Archive</p>
+        <h1 class="page-title">All Posts</h1>
+        <p class="page-copy !max-w-none whitespace-nowrap">先搜索关键词，再通过视图模式、分类与标签逐步缩小结果范围。</p>
+        <div class="page-toolbar mt-5">
+          <input v-model="keyword" class="page-field lg:col-span-1" placeholder="Search title or summary..." />
+          <button class="btn-secondary" :class="{ 'chip-active': viewMode === 'list' }" @click="viewMode = 'list'">List</button>
+          <button class="btn-secondary" :class="{ 'chip-active': viewMode === 'grid' }" @click="viewMode = 'grid'">Grid</button>
+        </div>
       </div>
-      <p class="max-w-xl text-sm leading-7 text-white/60">
-        这里会承接分页、分类和标签筛选。当前先用设计化的归档布局，把未来内容系统的承载空间留出来。
-      </p>
-    </header>
+    </section>
 
-    <div class="grid gap-6 lg:grid-cols-[0.36fr_1fr]">
-      <aside class="section-card space-y-5">
-        <div>
+    <section class="page-band">
+      <div class="content-wrap space-y-6">
+        <div class="space-y-1">
           <p class="eyebrow">Filters</p>
-          <h2 class="section-title">筛选维度</h2>
+          <h2 class="title-lg">筛选控制台</h2>
         </div>
-        <div class="space-y-3">
-          <div class="filter-chip">全部文章</div>
-          <div class="filter-chip">工程系统</div>
-          <div class="filter-chip">设计语言</div>
-          <div class="filter-chip">写作方法</div>
+        <div class="chip-row">
+          <button class="chip-btn" :class="{ active: sortMode === 'newest' }" @click="sortMode = 'newest'">Newest</button>
+          <button class="chip-btn" :class="{ active: sortMode === 'oldest' }" @click="sortMode = 'oldest'">Oldest</button>
+          <button class="chip-btn" :class="{ active: sortMode === 'title' }" @click="sortMode = 'title'">Title</button>
+          <button class="chip-btn" :class="{ active: activeCategory === '' }" @click="activeCategory = ''">All Categories</button>
+          <button
+            v-for="category in categories"
+            :key="category.id"
+            class="chip-btn"
+            :class="{ active: activeCategory === category.name }"
+            @click="activeCategory = activeCategory === category.name ? '' : category.name"
+            >
+              {{ category.name }}
+            </button>
+          <button class="chip-btn" :class="{ active: activeTag === '' }" @click="activeTag = ''">All Tags</button>
+          <button
+            v-for="tag in tags"
+            :key="tag.id"
+            class="chip-btn"
+            :class="{ active: activeTag === tag.name }"
+            @click="activeTag = activeTag === tag.name ? '' : tag.name"
+            >
+              {{ tag.name }}
+            </button>
+          <button class="btn-ghost" @click="clearFilters">重置</button>
         </div>
-      </aside>
 
-      <section class="space-y-4">
-        <article class="section-card article-preview">
-          <p class="story-meta">APR 17 · SYSTEMS</p>
-          <h2 class="story-title text-3xl">从零开始搭一个可长期维护的个人博客系统</h2>
-          <p class="story-summary">
-            目录结构、共享类型、数据库、容器化和前端设计并不是几个独立话题，它们共同决定了项目能否安稳成长。
-          </p>
-        </article>
-        <article class="section-card article-preview">
-          <p class="story-meta">APR 14 · DESIGN</p>
-          <h2 class="story-title text-3xl">让页面看起来更贵，不是靠装饰，而是靠秩序</h2>
-          <p class="story-summary">
-            通过留白、层次、对比和节奏构建一种更成熟的阅读气质，而不是依赖密集的视觉噪声。
-          </p>
-        </article>
-        <article class="section-card article-preview">
-          <p class="story-meta">APR 08 · NOTES</p>
-          <h2 class="story-title text-3xl">写给前端：理解后端和部署之后，你的界面会更稳定</h2>
-          <p class="story-summary">
-            真正成熟的前端设计，不只考虑像素和组件，也会考虑接口形状、环境差异和可维护性。
-          </p>
-        </article>
-      </section>
-    </div>
+        <p class="eyebrow">{{ sortedPosts.length }} 条结果</p>
+        <div v-if="loading" class="muted">正在加载文章...</div>
+        <div v-else-if="errorMessage" class="muted text-red-600">{{ errorMessage }}</div>
+        <div v-else-if="!sortedPosts.length" class="muted">当前筛选条件下暂无文章。</div>
+
+        <div v-else-if="viewMode === 'list'" class="list-shell">
+          <article v-for="post in sortedPosts" :key="post.id" class="list-row">
+            <p class="list-date">{{ formatDate(post.publishedAt) }} · {{ post.categories[0] || '未分类' }}</p>
+            <div class="list-body">
+              <RouterLink :to="`/posts/${post.slug}`">
+                <h2 class="list-title">{{ post.title }}</h2>
+              </RouterLink>
+              <p class="list-summary">{{ post.summary }}</p>
+            </div>
+          </article>
+        </div>
+
+        <div v-else class="tile-grid">
+          <article v-for="post in sortedPosts" :key="post.id" class="tile-card">
+            <p class="story-meta">{{ formatDate(post.publishedAt) }}</p>
+            <RouterLink :to="`/posts/${post.slug}`">
+              <h2 class="list-title mt-3">{{ post.title }}</h2>
+            </RouterLink>
+            <p class="list-summary">{{ post.summary }}</p>
+          </article>
+        </div>
+      </div>
+    </section>
   </section>
 </template>

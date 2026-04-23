@@ -2,10 +2,14 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type { CreatePostDto, PostDetailDto, PostListItemDto, UpdatePostDto } from '@rainy/shared';
 import type { CurrentUserPayload } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../common/prisma/prisma.service';
+import { SearchService } from '../search/search.service';
 
 @Injectable()
 export class PostsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly searchService: SearchService
+  ) {}
 
   async findAll(): Promise<PostListItemDto[]> {
     const posts = await this.prisma.post.findMany({
@@ -153,6 +157,7 @@ export class PostsService {
       }
     });
 
+    await this.searchService.syncPostById(post.id);
     return this.toDetailItem(post);
   }
 
@@ -233,6 +238,7 @@ export class PostsService {
       }
     });
 
+    await this.searchService.syncPostById(updatedPost.id);
     return this.toDetailItem(updatedPost);
   }
 
@@ -245,10 +251,19 @@ export class PostsService {
       throw new NotFoundException(`Post "${id}" not found`);
     }
 
-    await this.prisma.post.delete({
-      where: { id }
-    });
+    await this.prisma.$transaction([
+      this.prisma.postTag.deleteMany({
+        where: { postId: id }
+      }),
+      this.prisma.postCategory.deleteMany({
+        where: { postId: id }
+      }),
+      this.prisma.post.delete({
+        where: { id }
+      })
+    ]);
 
+    await this.searchService.syncPostById(id);
     return { success: true };
   }
 

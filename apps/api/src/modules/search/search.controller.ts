@@ -1,13 +1,28 @@
 import { Controller, Get, Query } from '@nestjs/common';
+import { SearchService } from './search.service';
 
-@Controller('posts/search')
+@Controller('search/posts')
 export class SearchController {
+  constructor(private readonly searchService: SearchService) {}
+
   @Get()
-  search(@Query('keyword') keyword = '') {
+  async search(
+    @Query('keyword') keyword = '',
+    @Query('category') category?: string,
+    @Query('tag') tag?: string,
+    @Query('limit') limit?: string
+  ) {
+    const normalizedLimit = limit ? Number.parseInt(limit, 10) : undefined;
+    const hits = await this.searchService.search(keyword, {
+      category,
+      tag,
+      limit: Number.isFinite(normalizedLimit) ? normalizedLimit : undefined
+    });
+
     return {
       keyword,
-      hits: [],
-      message: 'Search endpoint placeholder for Meilisearch integration'
+      total: hits.length,
+      hits
     };
   }
 }

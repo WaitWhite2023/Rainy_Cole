@@ -1,40 +1,39 @@
 <template>
-  <section class="space-y-8">
-    <header class="section-card">
-      <p class="eyebrow">About</p>
-      <h1 class="font-display text-4xl text-white sm:text-5xl">关于这个博客</h1>
-      <p class="mt-5 max-w-3xl text-sm leading-8 text-white/62">
-        这是一个把个人写作、系统设计和审美表达放在一起思考的空间。它不追求高频更新，而是希望每一次更新都足够清晰、足够耐看，也足够值得以后再翻回来。
-      </p>
-    </header>
-
-    <div class="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
-      <article class="section-card">
-        <p class="eyebrow">Intent</p>
-        <h2 class="section-title">我想把它做成一个长期工程。</h2>
-        <p class="mt-4 text-sm leading-8 text-white/62">
-          内容上，它是一份个人档案；工程上，它是一套从前台到后台、从数据到部署都能持续演进的系统。两者叠在一起，才是这个博客最有意思的地方。
+  <section>
+    <section class="page-hero">
+      <div class="page-hero-inner space-y-4">
+        <p class="page-kicker !text-[0.95rem] !font-bold tracking-[0.08em]">关于我们</p>
+        <h1 class="page-title !text-[clamp(2.4rem,5.2vw,4rem)] !leading-[0.94]">关于本站</h1>
+        <p class="page-copy !max-w-[38ch] !text-[1.08rem] !font-semibold !leading-[1.68]">
+          这是一个长期写作与工程实践并行的个人站点，核心目标是清晰表达、快速阅读与持续维护。
         </p>
-      </article>
+      </div>
+    </section>
 
-      <article class="section-card grid gap-4 sm:grid-cols-2">
-        <div class="tag-card">
-          <p class="tag-card-title">写作</p>
-          <p class="tag-card-copy">记录系统、设计、长期主义与软件工程实践。</p>
-        </div>
-        <div class="tag-card">
-          <p class="tag-card-title">工程</p>
-          <p class="tag-card-copy">验证前后端分离、共享类型和部署约定的长期价值。</p>
-        </div>
-        <div class="tag-card">
-          <p class="tag-card-title">审美</p>
-          <p class="tag-card-copy">希望页面克制、优雅、耐看，不被模板感主导。</p>
-        </div>
-        <div class="tag-card">
-          <p class="tag-card-title">维护</p>
-          <p class="tag-card-copy">让内容与代码都适合被长时间使用与迭代。</p>
-        </div>
-      </article>
-    </div>
+    <section class="page-band">
+      <div class="content-wrap list-shell">
+        <article class="list-row">
+          <p class="list-date">01</p>
+          <div class="list-body">
+            <h2 class="list-title">统一视觉语言</h2>
+            <p class="list-summary">前台页面使用一致的配色、字体层级与交互控件，减少跳转时的风格割裂感。</p>
+          </div>
+        </article>
+        <article class="list-row">
+          <p class="list-date">02</p>
+          <div class="list-body">
+            <h2 class="list-title">内容优先布局</h2>
+            <p class="list-summary">把阅读与检索作为主要流程，优先展示标题、摘要与时间信息，便于快速判断内容价值。</p>
+          </div>
+        </article>
+        <article class="list-row">
+          <p class="list-date">03</p>
+          <div class="list-body">
+            <h2 class="list-title">可扩展结构</h2>
+            <p class="list-summary">底层采用可复用的 Tailwind 组件层，后续扩展新页面时无需从头设计。</p>
+          </div>
+        </article>
+      </div>
+    </section>
   </section>
 </template>

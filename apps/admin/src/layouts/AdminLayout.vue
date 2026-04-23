@@ -29,7 +29,7 @@ function handleLogout() {
         <RouterLink to="/" class="admin-nav-link">仪表盘</RouterLink>
         <RouterLink to="/posts" class="admin-nav-link">文章管理</RouterLink>
         <RouterLink to="/posts/new" class="admin-nav-link">新建文章</RouterLink>
-        <RouterLink to="/settings" class="admin-nav-link">站点设置</RouterLink>
+        <RouterLink v-if="user?.role === 'admin'" to="/settings" class="admin-nav-link">站点设置</RouterLink>
       </nav>
 
       <div class="mt-10 rounded-[1.4rem] border border-white/8 bg-white/[0.035] p-5">
