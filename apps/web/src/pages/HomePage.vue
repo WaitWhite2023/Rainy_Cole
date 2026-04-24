@@ -143,7 +143,7 @@ onMounted(bootstrap);
 
     <section class="page-band">
       <div class="content-wrap space-y-5">
-        <p class="eyebrow">标签云</p>
+        <p class="eyebrow">标签</p>
         <div class="chip-row">
           <RouterLink
             v-for="item in tagCloud"

@@ -132,7 +132,6 @@ onMounted(bootstrap);
     <section class="page-band">
       <div class="content-wrap space-y-6">
         <div class="space-y-1">
-          <p class="eyebrow">筛选</p>
           <h2 class="title-lg">筛选控制台</h2>
         </div>
         <div class="chip-row">

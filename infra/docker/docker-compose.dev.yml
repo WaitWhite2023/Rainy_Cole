@@ -1,0 +1,35 @@
+services:
+  web:
+    command: pnpm --filter @rainy/web dev --host 0.0.0.0 --port 5173
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "120"
+    volumes:
+      - ../../:/workspace
+      - workspace_node_modules:/workspace/node_modules
+      - pnpm_store:/root/.local/share/pnpm/store
+
+  admin:
+    command: pnpm --filter @rainy/admin dev --host 0.0.0.0 --port 5174
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "120"
+    volumes:
+      - ../../:/workspace
+      - workspace_node_modules:/workspace/node_modules
+      - pnpm_store:/root/.local/share/pnpm/store
+
+  api:
+    command: pnpm --filter @rainy/api dev
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "120"
+    volumes:
+      - ../../:/workspace
+      - ../../apps/api/uploads:/workspace/apps/api/uploads
+      - workspace_node_modules:/workspace/node_modules
+      - pnpm_store:/root/.local/share/pnpm/store
+
+volumes:
+  workspace_node_modules:
+  pnpm_store:

@@ -78,7 +78,7 @@ onMounted(bootstrap);
   <section class="about-showcase">
     <section class="about-hero">
       <div class="content-wrap about-hero-inner">
-        <p class="about-contact-title">What Our Readers Say</p>
+        <p class="about-hero-title">What Our Readers Say</p>
         <p v-if="loading" class="about-quote">正在加载关于信息...</p>
         <p v-else-if="errorMessage" class="about-quote">{{ errorMessage }}</p>
         <template v-else>
