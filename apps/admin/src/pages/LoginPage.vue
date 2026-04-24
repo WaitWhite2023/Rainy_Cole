@@ -11,6 +11,7 @@ const form = reactive({
   username: 'admin',
   password: '123456'
 });
+const rememberMe = ref(true);
 
 async function handleLogin() {
   loading.value = true;
@@ -27,72 +28,71 @@ async function handleLogin() {
 </script>
 
 <template>
-  <div class="relative min-h-screen overflow-hidden bg-[#07090d] px-6 py-8 text-white">
-    <div class="pointer-events-none absolute -left-24 top-16 h-72 w-72 rounded-full bg-[radial-gradient(circle,rgba(185,160,122,0.38),transparent_65%)] blur-3xl"></div>
-    <div class="pointer-events-none absolute right-[-5rem] top-[-2rem] h-80 w-80 rounded-full bg-[radial-gradient(circle,rgba(85,111,159,0.28),transparent_68%)] blur-3xl"></div>
-    <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] bg-[size:72px_72px] opacity-25"></div>
+  <div class="admin-login">
+    <header class="admin-login-topbar">
+      <div class="admin-brand">Rainy</div>
+      <RouterLink to="/" class="admin-login-return">← 返回首页</RouterLink>
+    </header>
 
-    <div class="relative mx-auto grid min-h-[calc(100vh-4rem)] max-w-6xl gap-6 lg:grid-cols-[1.1fr_0.9fr]">
-      <section class="flex items-center">
-        <div class="max-w-2xl">
-          <p class="text-xs uppercase tracking-[0.4em] text-white/35">Rainy Cole Admin</p>
-          <h1 class="mt-6 font-['Bodoni_Moda'] text-5xl leading-[0.94] text-white sm:text-6xl lg:text-7xl">
-            用更安静、
-            <span class="block text-white/58">更长期的方式管理内容。</span>
+    <div class="admin-login-wrap">
+      <section class="admin-login-copy">
+        <div class="admin-login-copy-inner">
+          <p class="admin-kicker">Welcome back</p>
+          <h1 class="admin-login-title">
+            LOGIN TO
+            <span class="block">RAINY</span>
+            <span class="block">COLE</span>
           </h1>
-          <p class="mt-8 max-w-xl text-base leading-8 text-white/62">
-            后台不应该只是“功能凑齐”的工具页，它也应该有节奏、有边界、有秩序感。这里承接文章、设置、资源和长期写作系统的管理入口。
+          <p class="admin-login-text">
+            深度记录，长期存档。<br />
+            继续管理你的文章与草稿。
           </p>
-
-          <div class="mt-10 grid gap-4 sm:grid-cols-3">
-            <div class="rounded-[1.35rem] border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
-              <p class="font-['Bodoni_Moda'] text-3xl text-[#d3b991]">01</p>
-              <p class="mt-3 text-sm text-white/72">Calm</p>
-              <p class="mt-2 text-xs leading-6 text-white/42">用克制的层次组织复杂功能。</p>
-            </div>
-            <div class="rounded-[1.35rem] border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
-              <p class="font-['Bodoni_Moda'] text-3xl text-[#d3b991]">02</p>
-              <p class="mt-3 text-sm text-white/72">Precise</p>
-              <p class="mt-2 text-xs leading-6 text-white/42">保持内容、接口和权限边界清晰。</p>
-            </div>
-            <div class="rounded-[1.35rem] border border-white/10 bg-white/5 p-5 backdrop-blur-xl">
-              <p class="font-['Bodoni_Moda'] text-3xl text-[#d3b991]">03</p>
-              <p class="mt-3 text-sm text-white/72">Elegant</p>
-              <p class="mt-2 text-xs leading-6 text-white/42">让管理工具也具备审美一致性。</p>
-            </div>
-          </div>
+          <p class="admin-login-note">
+            DEEP ESSAYS, LONG-TERM ARCHIVE.<br />
+            默认账号：`admin / 123456`、`editor / 123456`
+          </p>
         </div>
       </section>
 
-      <section class="flex items-center justify-center lg:justify-end">
-        <div class="w-full max-w-md rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.1),rgba(255,255,255,0.045))] p-7 shadow-[0_24px_80px_rgba(0,0,0,0.35)] backdrop-blur-2xl">
-          <div class="flex items-start justify-between gap-4">
+      <section class="admin-login-panel">
+        <div class="admin-login-card">
+          <div class="admin-login-card-head">
             <div>
-              <p class="text-xs uppercase tracking-[0.35em] text-white/34">Sign in</p>
-              <h2 class="mt-3 font-['Bodoni_Moda'] text-4xl text-white">登录后台</h2>
-            </div>
-            <div class="grid h-12 w-12 place-items-center rounded-full border border-white/10 bg-white/5 text-[11px] uppercase tracking-[0.25em] text-white/58">
-              RC
+              <h2 class="admin-login-card-title">账号登录。</h2>
+              <p class="admin-login-card-copy">登录后可管理文章、草稿与个人内容。</p>
             </div>
           </div>
 
-          <p class="mt-5 text-sm leading-7 text-white/54">
-            默认种子账号：`admin / 123456`、`editor / 123456`。如果你已经跑过数据库种子数据，这里可以直接登录联调。
-          </p>
-
-          <el-form label-position="top" class="mt-8 space-y-4" @submit.prevent="handleLogin">
-            <el-form-item label="用户名">
-              <el-input v-model="form.username" size="large" placeholder="请输入用户名" />
+          <el-form label-position="top" class="admin-login-form" @submit.prevent="handleLogin">
+            <el-form-item label="用户名 / 邮箱">
+              <el-input v-model="form.username" size="large" placeholder="请输入用户名或邮箱" />
             </el-form-item>
             <el-form-item label="密码">
               <el-input v-model="form.password" size="large" type="password" show-password placeholder="请输入密码" />
             </el-form-item>
-            <el-button class="mt-4 w-full" size="large" type="primary" :loading="loading" @click="handleLogin">
-              进入后台
+
+            <div class="admin-login-actions">
+              <label class="admin-login-check">
+                <input v-model="rememberMe" type="checkbox" />
+                <span>记住我</span>
+              </label>
+              <button type="button" class="admin-login-link">忘记密码？</button>
+            </div>
+
+            <el-button class="w-full" size="large" type="primary" :loading="loading" @click="handleLogin">
+              登录
             </el-button>
           </el-form>
 
-          <div class="mt-8 flex items-center justify-between border-t border-white/10 pt-5 text-xs uppercase tracking-[0.24em] text-white/32">
+          <div class="admin-login-divider">
+            <span>管理后台</span>
+          </div>
+
+          <button type="button" class="admin-login-secondary" @click="handleLogin">
+            使用默认账号进入
+          </button>
+
+          <div class="admin-login-foot">
             <span>Monorepo</span>
             <span>NestJS · Vue 3</span>
           </div>

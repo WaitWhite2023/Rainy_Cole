@@ -1,9 +1,21 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { MdEditor } from 'md-editor-v3';
 import type { CategoryDto, TagDto } from '@rainy/shared';
-import { createCategory, createPost, createTag, fetchAdminPost, fetchCategories, fetchTags, updatePost, uploadAsset } from '../services/content';
+import {
+  createCategory,
+  createPost,
+  createTag,
+  deleteCategory,
+  deleteTag,
+  fetchAdminPost,
+  fetchCategories,
+  fetchTags,
+  updatePost,
+  uploadAsset
+} from '../services/content';
 
 const router = useRouter();
 const route = useRoute();
@@ -27,12 +39,27 @@ const form = reactive({
   tagIds: [] as string[]
 });
 
+function normalizeText(value: string) {
+  return value.trim().replace(/\s+/g, ' ').toLowerCase();
+}
+
+function dedupeTaxonomy<T extends { name: string; slug: string }>(items: T[]) {
+  const picked = new Map<string, T>();
+  for (const item of items) {
+    const key = `${normalizeText(item.name)}::${normalizeText(item.slug)}`;
+    if (!picked.has(key)) {
+      picked.set(key, item);
+    }
+  }
+  return [...picked.values()];
+}
+
 async function bootstrap() {
   loading.value = true;
   try {
     const [categoryList, tagList] = await Promise.all([fetchCategories(), fetchTags()]);
-    categories.value = categoryList;
-    tags.value = tagList;
+    categories.value = dedupeTaxonomy(categoryList);
+    tags.value = dedupeTaxonomy(tagList);
 
     if (isEdit && postId) {
       const post = await fetchAdminPost(postId);
@@ -89,22 +116,54 @@ async function handleUpload(event: Event) {
 
 async function handleCreateCategory() {
   if (!newCategory.name || !newCategory.slug) return;
+  const sameName = categories.value.some((item) => normalizeText(item.name) === normalizeText(newCategory.name));
+  const sameSlug = categories.value.some((item) => normalizeText(item.slug) === normalizeText(newCategory.slug));
+  if (sameName || sameSlug) {
+    ElMessage.warning(sameName ? '分类名称已存在' : '分类 slug 已存在');
+    return;
+  }
   const created = await createCategory(newCategory);
-  categories.value.push(created);
+  categories.value = dedupeTaxonomy([...categories.value, created]);
   form.categoryIds.push(created.id);
   newCategory.name = '';
   newCategory.slug = '';
   ElMessage.success('分类已创建');
 }
 
+async function handleDeleteCategory(id: string, name: string) {
+  await ElMessageBox.confirm(`确定删除分类「${name}」吗？该分类会从已关联文章中移除。`, '删除分类', {
+    type: 'warning'
+  });
+  await deleteCategory(id);
+  categories.value = categories.value.filter((item) => item.id !== id);
+  form.categoryIds = form.categoryIds.filter((categoryId) => categoryId !== id);
+  ElMessage.success('分类已删除');
+}
+
 async function handleCreateTag() {
   if (!newTag.name || !newTag.slug) return;
+  const sameName = tags.value.some((item) => normalizeText(item.name) === normalizeText(newTag.name));
+  const sameSlug = tags.value.some((item) => normalizeText(item.slug) === normalizeText(newTag.slug));
+  if (sameName || sameSlug) {
+    ElMessage.warning(sameName ? '标签名称已存在' : '标签 slug 已存在');
+    return;
+  }
   const created = await createTag(newTag);
-  tags.value.push(created);
+  tags.value = dedupeTaxonomy([...tags.value, created]);
   form.tagIds.push(created.id);
   newTag.name = '';
   newTag.slug = '';
   ElMessage.success('标签已创建');
+}
+
+async function handleDeleteTag(id: string, name: string) {
+  await ElMessageBox.confirm(`确定删除标签「${name}」吗？该标签会从已关联文章中移除。`, '删除标签', {
+    type: 'warning'
+  });
+  await deleteTag(id);
+  tags.value = tags.value.filter((item) => item.id !== id);
+  form.tagIds = form.tagIds.filter((tagId) => tagId !== id);
+  ElMessage.success('标签已删除');
 }
 
 onMounted(() => {
@@ -113,34 +172,22 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="space-y-8">
-    <div class="admin-hero flex flex-col gap-5 rounded-[2rem] border border-white/8 px-7 py-8 lg:flex-row lg:items-end lg:justify-between">
+  <section class="admin-page">
+    <div class="admin-page-head">
       <div>
-        <p class="admin-eyebrow">Editor</p>
-        <h1 class="mt-4 font-['Bodoni_Moda'] text-5xl leading-[0.96] text-white">{{ isEdit ? '编辑文章' : '新建文章' }}</h1>
-        <p class="mt-4 max-w-2xl text-sm leading-8 text-white/58">支持草稿、发布、封面上传与标签分类绑定。视觉上保持更沉静、清楚的编辑氛围。</p>
+        <h1 class="admin-page-title">{{ isEdit ? '编辑文章' : '新建文章' }}</h1>
+        <p class="admin-page-copy">按“内容主区 + 发布侧栏”结构填写文章信息并完成发布配置。</p>
       </div>
-      <el-button size="large" @click="router.push('/posts')">返回列表</el-button>
+      <div class="admin-head-actions">
+        <div class="admin-chip">{{ isEdit ? 'Editing' : 'Creating' }}</div>
+        <el-button @click="router.push('/posts')">返回列表</el-button>
+      </div>
     </div>
 
-    <el-form label-position="top" class="grid gap-6 lg:grid-cols-[2fr_1fr]">
-      <div v-loading="loading" class="admin-panel rounded-[1.8rem] p-6">
-        <el-form-item label="标题">
-          <el-input v-model="form.title" placeholder="请输入标题" />
-        </el-form-item>
-        <el-form-item label="Slug">
-          <el-input v-model="form.slug" placeholder="例如：hello-rainy-cole" />
-        </el-form-item>
-        <el-form-item label="摘要">
-          <el-input v-model="form.summary" type="textarea" :rows="3" />
-        </el-form-item>
-        <el-form-item label="正文">
-          <el-input v-model="form.content" type="textarea" :rows="16" placeholder="首版先用 textarea，后续再接 Markdown 编辑器" />
-        </el-form-item>
-      </div>
-
-      <div class="space-y-6">
-        <div class="admin-panel rounded-[1.8rem] p-6">
+    <el-form label-position="top" class="admin-post-editor" v-loading="loading">
+      <div class="admin-post-settings-grid">
+        <div class="admin-surface">
+          <p class="admin-form-title">发布设置</p>
           <el-form-item label="状态">
             <el-select v-model="form.status" class="w-full">
               <el-option label="草稿" value="draft" />
@@ -153,34 +200,91 @@ onMounted(() => {
             <el-input v-model="form.coverUrl" placeholder="/uploads/xxx.png" />
           </el-form-item>
 
-          <label class="block text-sm text-stone-600">上传封面</label>
+          <label class="block text-sm text-[#53607e]">上传封面</label>
           <input type="file" accept="image/*" @change="handleUpload" />
         </div>
 
-        <div class="admin-panel rounded-[1.8rem] p-6">
+        <div class="admin-surface">
+          <p class="admin-form-title">分类管理</p>
           <el-form-item label="分类">
             <el-select v-model="form.categoryIds" multiple class="w-full">
               <el-option v-for="item in categories" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
-          <div class="grid gap-2 md:grid-cols-2">
+          <div class="admin-inline-fields">
             <el-input v-model="newCategory.name" placeholder="分类名称" />
             <el-input v-model="newCategory.slug" placeholder="分类 slug" />
           </div>
-          <el-button plain @click="handleCreateCategory">新增分类</el-button>
+          <el-button plain class="mt-3" @click="handleCreateCategory">新增分类</el-button>
+          <div v-if="categories.length" class="admin-taxonomy-list">
+            <div v-for="item in categories" :key="item.id" class="admin-taxonomy-item">
+              <p class="admin-taxonomy-meta">
+                <span>{{ item.name }}</span>
+                <span>/{{ item.slug }}</span>
+              </p>
+              <button type="button" class="admin-action-link is-danger" @click="handleDeleteCategory(item.id, item.name)">删除</button>
+            </div>
+          </div>
         </div>
 
-        <div class="admin-panel rounded-[1.8rem] p-6">
+        <div class="admin-surface">
+          <p class="admin-form-title">标签管理</p>
           <el-form-item label="标签">
             <el-select v-model="form.tagIds" multiple class="w-full">
               <el-option v-for="item in tags" :key="item.id" :label="item.name" :value="item.id" />
             </el-select>
           </el-form-item>
-          <div class="grid gap-2 md:grid-cols-2">
+          <div class="admin-inline-fields">
             <el-input v-model="newTag.name" placeholder="标签名称" />
             <el-input v-model="newTag.slug" placeholder="标签 slug" />
           </div>
-          <el-button plain @click="handleCreateTag">新增标签</el-button>
+          <el-button plain class="mt-3" @click="handleCreateTag">新增标签</el-button>
+          <div v-if="tags.length" class="admin-taxonomy-list">
+            <div v-for="item in tags" :key="item.id" class="admin-taxonomy-item">
+              <p class="admin-taxonomy-meta">
+                <span>{{ item.name }}</span>
+                <span>/{{ item.slug }}</span>
+              </p>
+              <button type="button" class="admin-action-link is-danger" @click="handleDeleteTag(item.id, item.name)">删除</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-surface">
+        <p class="admin-form-title">文章内容</p>
+        <el-form-item label="标题">
+          <el-input v-model="form.title" placeholder="请输入标题" />
+        </el-form-item>
+        <el-form-item label="Slug">
+          <el-input v-model="form.slug" placeholder="例如：hello-rainy-cole" />
+        </el-form-item>
+        <el-form-item label="摘要">
+          <el-input v-model="form.summary" type="textarea" :rows="3" />
+        </el-form-item>
+        <el-form-item label="正文（Markdown）">
+          <MdEditor
+            v-model="form.content"
+            class="admin-md-editor"
+            :preview="true"
+            :toolbars-exclude="['github']"
+          />
+        </el-form-item>
+      </div>
+
+      <div class="admin-stack">
+        <div class="admin-surface">
+          <p class="admin-form-title">编辑建议</p>
+          <div class="admin-rows">
+            <div class="admin-row">
+              <span class="admin-row-index">01</span>
+              <p>标题和摘要先决定这篇文章的阅读入口，正文在其后展开。</p>
+            </div>
+            <div class="admin-row">
+              <span class="admin-row-index">02</span>
+              <p>分类用于归档，标签用于横向连接，不建议两者承担同一种职责。</p>
+            </div>
+          </div>
         </div>
 
         <div class="flex justify-end gap-3">

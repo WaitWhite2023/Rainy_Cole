@@ -10,7 +10,8 @@ const errorMessage = ref('');
 const posts = ref<PostListItemDto[]>([]);
 
 const featuredPost = computed(() => posts.value[0] || null);
-const latestPosts = computed(() => posts.value.slice(1, 6));
+const featuredCoverPost = computed(() => posts.value.find((item) => item.coverUrl) || featuredPost.value);
+const latestPosts = computed(() => (posts.value.length > 1 ? posts.value.slice(1, 6) : posts.value.slice(0, 1)));
 const recommendedPosts = computed(() => posts.value.slice(0, 3));
 const totalTagCount = computed(() => {
   const allTags = new Set<string>();
@@ -38,7 +39,11 @@ const tagCloud = computed(() => {
 
 function formatDate(value?: string) {
   if (!value) return 'Draft';
-  return new Date(value).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+  const date = new Date(value);
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}.${month}.${day}`;
 }
 
 const fallbackImage =
@@ -70,17 +75,20 @@ onMounted(bootstrap);
 </script>
 
 <template>
-  <section>
+  <section class="home-page">
     <section class="hero-blue">
-      <div class="content-wrap hero-grid">
-        <div>
-          <p class="home-kicker">深度论述、长期存档</p>
+      <div class="content-wrap home-wrap hero-grid">
+        <div class="home-hero-copy-block">
+          <p class="home-hero-subtitle">深度记录，长期存档</p>
           <h1 class="home-hero-title">
-            Deep Essays
-            <br />
-            Long-term Archive
+            <span>Deep Essays</span>
+            <span>Long-Term</span>
+            <span>Archive</span>
           </h1>
-          <div class="mt-5 flex flex-wrap gap-3">
+          <p class="home-hero-copy">
+            围绕技术、写作与长期主义展开更新。先看摘要，再决定哪些内容值得你认真读完。
+          </p>
+          <div class="home-hero-actions">
             <RouterLink to="/posts" class="btn-secondary">浏览文章</RouterLink>
             <RouterLink to="/search" class="btn-secondary">快速搜索</RouterLink>
           </div>
@@ -92,19 +100,20 @@ onMounted(bootstrap);
             <span class="meta-pill">标签 {{ totalTagCount }} 个</span>
           </div>
           <div class="media-frame">
-            <img :src="featuredPost?.coverUrl || fallbackImage" :alt="featuredPost?.title || 'Featured image'" />
+            <img :src="featuredCoverPost?.coverUrl || fallbackImage" :alt="featuredCoverPost?.title || 'Featured image'" />
+            <div class="media-frame-overlay"></div>
           </div>
         </div>
       </div>
     </section>
 
     <section class="band band-strong">
-      <div class="content-wrap home-recent-grid">
+      <div class="content-wrap home-wrap home-recent-grid">
         <div class="home-recent-head">
-          <p class="home-kicker home-kicker--recent">最新文章</p>
+          <p class="eyebrow">Latest updates</p>
           <h2 class="home-recent-title">最新更新</h2>
           <p class="home-recent-copy">
-            先看标题和摘要，再打开真正值得深读的内容。
+            先看标题和摘要，再打开值得深读的内容。
           </p>
         </div>
 
@@ -112,37 +121,55 @@ onMounted(bootstrap);
           <div v-if="loading" class="muted">Loading posts...</div>
           <div v-else-if="errorMessage" class="muted text-red-600">{{ errorMessage }}</div>
           <div v-else class="home-recent-list">
-            <article v-for="post in latestPosts" :key="post.id" class="home-recent-item">
-              <p class="home-recent-date">{{ formatDate(post.publishedAt) }}</p>
-              <div class="home-recent-item-body">
-                <RouterLink :to="`/posts/${post.slug}`">
+            <RouterLink
+              v-for="post in latestPosts"
+              :key="post.id"
+              :to="`/posts/${post.slug}`"
+              class="card-link-reset"
+            >
+              <article class="home-recent-item">
+                <div class="home-recent-meta">
+                  <p class="home-recent-date">{{ formatDate(post.publishedAt) }}</p>
+                  <img
+                    v-if="post.coverUrl"
+                    :src="post.coverUrl"
+                    :alt="post.title"
+                    class="home-recent-cover"
+                  />
+                </div>
+                <div class="home-recent-item-body">
                   <h2 class="home-recent-item-title">{{ post.title }}</h2>
-                </RouterLink>
-                <p class="home-recent-item-summary">{{ post.summary }}</p>
-              </div>
-            </article>
+                  <p class="home-recent-item-summary">{{ post.summary }}</p>
+                </div>
+              </article>
+            </RouterLink>
           </div>
         </div>
       </div>
     </section>
 
     <section class="page-band">
-      <div class="content-wrap space-y-5">
+      <div class="content-wrap home-wrap space-y-5">
         <p class="eyebrow">推荐阅读</p>
         <div class="tile-grid">
-          <article v-for="post in recommendedPosts" :key="post.id" class="tile-card">
-            <p class="home-recommend-date">{{ formatDate(post.publishedAt) }}</p>
-            <RouterLink :to="`/posts/${post.slug}`">
+          <RouterLink
+            v-for="post in recommendedPosts"
+            :key="post.id"
+            :to="`/posts/${post.slug}`"
+            class="card-link-reset"
+          >
+            <article class="tile-card home-card">
+              <p class="home-recommend-date">{{ formatDate(post.publishedAt) }}</p>
               <h2 class="list-title mt-3">{{ post.title }}</h2>
-            </RouterLink>
-            <p class="list-summary">{{ post.summary }}</p>
-          </article>
+              <p class="list-summary">{{ post.summary }}</p>
+            </article>
+          </RouterLink>
         </div>
       </div>
     </section>
 
     <section class="page-band">
-      <div class="content-wrap space-y-5">
+      <div class="content-wrap home-wrap space-y-5">
         <p class="eyebrow">标签</p>
         <div class="chip-row">
           <RouterLink

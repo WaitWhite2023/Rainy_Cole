@@ -53,6 +53,24 @@ const pagedPosts = computed(() => {
   const start = (currentPage.value - 1) * pageSize;
   return sortedPosts.value.slice(start, start + pageSize);
 });
+const uniqueCategories = computed(() => {
+  const seen = new Set<string>();
+  return categories.value.filter((category) => {
+    const key = category.name.trim().toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+});
+const uniqueTags = computed(() => {
+  const seen = new Set<string>();
+  return tags.value.filter((tag) => {
+    const key = tag.name.trim().toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+});
 
 function formatDate(value?: string) {
   if (!value) return '未发布';
@@ -132,7 +150,7 @@ onMounted(bootstrap);
     <section class="page-band">
       <div class="content-wrap space-y-6">
         <div class="space-y-1">
-          <h2 class="title-lg">筛选控制台</h2>
+          <h2 class="title-lg">文章筛选</h2>
         </div>
         <div class="chip-row">
           <button class="chip-btn" :class="{ active: sortMode === 'newest' }" @click="sortMode = 'newest'">最新</button>
@@ -140,7 +158,7 @@ onMounted(bootstrap);
           <button class="chip-btn" :class="{ active: sortMode === 'title' }" @click="sortMode = 'title'">标题</button>
           <button class="chip-btn" :class="{ active: activeCategory === '' }" @click="activeCategory = ''">全部分类</button>
           <button
-            v-for="category in categories"
+            v-for="category in uniqueCategories"
             :key="category.id"
             class="chip-btn"
             :class="{ active: activeCategory === category.name }"
@@ -150,7 +168,7 @@ onMounted(bootstrap);
             </button>
           <button class="chip-btn" :class="{ active: activeTag === '' }" @click="activeTag = ''">全部标签</button>
           <button
-            v-for="tag in tags"
+            v-for="tag in uniqueTags"
             :key="tag.id"
             class="chip-btn"
             :class="{ active: activeTag === tag.name }"
@@ -167,25 +185,49 @@ onMounted(bootstrap);
         <div v-else-if="!sortedPosts.length" class="muted">当前筛选条件下暂无文章。</div>
 
         <div v-else-if="viewMode === 'list'" class="home-recent-list">
-          <article v-for="post in pagedPosts" :key="post.id" class="home-recent-item">
-            <p class="home-recent-date">{{ formatDate(post.publishedAt) }} · {{ post.categories[0] || '未分类' }}</p>
-            <div class="home-recent-item-body">
-              <RouterLink :to="`/posts/${post.slug}`">
+          <RouterLink
+            v-for="post in pagedPosts"
+            :key="post.id"
+            :to="`/posts/${post.slug}`"
+            class="card-link-reset"
+          >
+            <article class="home-recent-item post-list-item">
+              <div class="post-list-item-meta">
+                <p class="home-recent-date">{{ formatDate(post.publishedAt) }} · {{ post.categories[0] || '未分类' }}</p>
+                <img
+                  v-if="post.coverUrl"
+                  :src="post.coverUrl"
+                  :alt="post.title"
+                  class="post-list-inline-cover"
+                />
+              </div>
+              <div class="home-recent-item-body post-list-item-body">
                 <h2 class="home-recent-item-title">{{ post.title }}</h2>
-              </RouterLink>
-              <p class="home-recent-item-summary">{{ post.summary }}</p>
-            </div>
-          </article>
+                <p class="home-recent-item-summary">{{ post.summary }}</p>
+              </div>
+            </article>
+          </RouterLink>
         </div>
 
         <div v-else class="tile-grid">
-          <article v-for="post in pagedPosts" :key="post.id" class="tile-card">
-            <p class="story-meta">{{ formatDate(post.publishedAt) }}</p>
-            <RouterLink :to="`/posts/${post.slug}`">
+          <RouterLink
+            v-for="post in pagedPosts"
+            :key="post.id"
+            :to="`/posts/${post.slug}`"
+            class="card-link-reset"
+          >
+            <article class="tile-card post-list-card">
+              <img
+                v-if="post.coverUrl"
+                :src="post.coverUrl"
+                :alt="post.title"
+                class="post-grid-cover"
+              />
+              <p class="story-meta">{{ formatDate(post.publishedAt) }}</p>
               <h2 class="list-title mt-3">{{ post.title }}</h2>
-            </RouterLink>
-            <p class="list-summary">{{ post.summary }}</p>
-          </article>
+              <p class="list-summary">{{ post.summary }}</p>
+            </article>
+          </RouterLink>
         </div>
 
         <div v-if="sortedPosts.length > pageSize" class="chip-row">

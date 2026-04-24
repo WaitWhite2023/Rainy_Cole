@@ -86,6 +86,12 @@ watch(slug, loadPost);
         </aside>
 
         <section class="reading-panel">
+          <img
+            v-if="post.coverUrl"
+            :src="post.coverUrl"
+            :alt="post.title"
+            class="post-detail-cover"
+          />
           <div class="markdown-body" v-html="renderedContent"></div>
         </section>
       </div>

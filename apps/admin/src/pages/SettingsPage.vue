@@ -47,16 +47,15 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="space-y-8">
-    <div class="admin-hero rounded-[2rem] border border-white/8 px-7 py-8">
-      <p class="admin-eyebrow">Settings</p>
-      <h1 class="mt-4 font-['Bodoni_Moda'] text-5xl leading-[0.96] text-white">站点设置</h1>
-      <p class="mt-4 max-w-2xl text-sm leading-8 text-white/58">
-        这里承接博客标题、副标题、关于页内容与默认 SEO 信息。后续还可以继续扩社交链接与站点主题参数。
-      </p>
+  <section class="admin-page">
+    <div class="admin-page-head admin-page-head-split">
+      <div>
+        <h1 class="admin-page-title">站点设置</h1>
+        <p class="admin-page-copy admin-page-copy-tight">集中维护站点名称、副标题、关于页内容和默认 SEO 信息。</p>
+      </div>
     </div>
 
-    <div v-loading="loading" class="admin-panel rounded-[1.8rem] p-6">
+    <div v-loading="loading" class="admin-surface">
       <el-form label-position="top" class="grid gap-4">
         <el-form-item label="站点名称">
           <el-input v-model="form.siteName" />
@@ -75,15 +74,15 @@ onMounted(() => {
         </el-form-item>
 
         <div class="space-y-3">
-          <div class="flex items-center justify-between">
-            <p class="text-sm font-medium text-white/80">社交链接</p>
+          <div class="admin-toolbar">
+            <p class="admin-form-title !mb-0">社交链接</p>
             <el-button plain size="small" @click="addSocialLink">新增链接</el-button>
           </div>
-          <div v-if="!form.socialLinks.length" class="text-sm text-white/50">暂无社交链接，点击“新增链接”添加。</div>
+          <div v-if="!form.socialLinks.length" class="admin-empty">暂无社交链接，点击“新增链接”添加。</div>
           <div
             v-for="(item, index) in form.socialLinks"
             :key="`social-${index}`"
-            class="grid gap-2 rounded-xl border border-white/10 p-3 md:grid-cols-[1fr_2fr_auto]"
+            class="admin-inline-row"
           >
             <el-input v-model="item.name" placeholder="名称，例如 GitHub" />
             <el-input v-model="item.url" placeholder="链接，例如 https://github.com/xxx" />

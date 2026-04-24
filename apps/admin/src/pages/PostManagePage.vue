@@ -9,6 +9,23 @@ const router = useRouter();
 const loading = ref(false);
 const posts = ref<PostListItemDto[]>([]);
 
+function normalizeMixedText(value: string) {
+  return value
+    .replace(/([A-Za-z])([\u4e00-\u9fa5])/g, '$1 $2')
+    .replace(/([\u4e00-\u9fa5])([A-Za-z])/g, '$1 $2');
+}
+
+function formatDate(value?: string) {
+  if (!value) return '--';
+  return new Date(value).toLocaleDateString('zh-CN');
+}
+
+function statusText(status: string) {
+  if (status === 'published') return 'Published';
+  if (status === 'archived') return 'Archived';
+  return 'Draft';
+}
+
 async function loadPosts() {
   loading.value = true;
   try {
@@ -33,29 +50,43 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="space-y-8">
-    <div class="admin-hero flex flex-col gap-5 rounded-[2rem] border border-white/8 px-7 py-8 lg:flex-row lg:items-end lg:justify-between">
+  <section class="admin-page">
+    <div class="admin-page-head">
       <div>
-        <p class="admin-eyebrow">Posts</p>
-        <h1 class="mt-4 font-['Bodoni_Moda'] text-5xl leading-[0.96] text-white">文章管理</h1>
-        <p class="mt-4 max-w-2xl text-sm leading-8 text-white/58">
-          当前已经接入后台文章列表、编辑和删除能力。后续这里会继续承接筛选、状态切换、搜索和分页。
-        </p>
+        <h1 class="admin-page-title">文章管理</h1>
+        <p class="admin-page-copy">按标题、状态和发布时间快速管理所有文章。</p>
       </div>
-      <el-button type="primary" size="large" @click="router.push('/posts/new')">新建文章</el-button>
+      <div class="admin-head-actions">
+        <div class="admin-chip">当前 {{ posts.length }} 篇文章</div>
+        <el-button type="primary" @click="router.push('/posts/new')">新建文章</el-button>
+      </div>
     </div>
 
-    <div class="admin-panel rounded-[1.8rem] p-4">
-      <el-table v-loading="loading" :data="posts" class="admin-table" stripe>
-        <el-table-column prop="title" label="标题" min-width="220" />
-        <el-table-column prop="slug" label="Slug" min-width="180" />
-        <el-table-column prop="status" label="状态" width="120" />
-        <el-table-column prop="publishedAt" label="发布时间" min-width="180" />
-        <el-table-column label="操作" width="220">
+    <div class="admin-surface">
+      <el-table v-loading="loading" :data="posts" class="admin-table">
+        <el-table-column label="标题" min-width="280">
           <template #default="{ row }">
-            <div class="flex gap-2">
-              <el-button size="small" @click="router.push(`/posts/${row.id}/edit`)">编辑</el-button>
-              <el-button size="small" type="danger" plain @click="handleDelete(row.id)">删除</el-button>
+            <div class="admin-table-title">{{ normalizeMixedText(row.title) }}</div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="slug" label="Slug" min-width="180" />
+        <el-table-column label="状态" width="140">
+          <template #default="{ row }">
+            <span class="admin-status-tag" :class="`is-${row.status}`">
+              {{ statusText(row.status) }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column label="发布时间" min-width="140">
+          <template #default="{ row }">
+            <span>{{ formatDate(row.publishedAt) }}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="160">
+          <template #default="{ row }">
+            <div class="admin-table-actions">
+              <button type="button" class="admin-action-link" @click="router.push(`/posts/${row.id}/edit`)">Edit</button>
+              <button type="button" class="admin-action-link is-danger" @click="handleDelete(row.id)">Delete</button>
             </div>
           </template>
         </el-table-column>

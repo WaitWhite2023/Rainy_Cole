@@ -30,12 +30,20 @@ export function createCategory(payload: Record<string, unknown>) {
   return apiPost<CategoryDto>('/admin/categories', payload, true);
 }
 
+export function deleteCategory(id: string) {
+  return apiDelete<{ success: boolean }>(`/admin/categories/${id}`, true);
+}
+
 export function fetchTags() {
   return apiGet<TagDto[]>('/tags');
 }
 
 export function createTag(payload: Record<string, unknown>) {
   return apiPost<TagDto>('/admin/tags', payload, true);
+}
+
+export function deleteTag(id: string) {
+  return apiDelete<{ success: boolean }>(`/admin/tags/${id}`, true);
 }
 
 export function fetchSiteSettings() {

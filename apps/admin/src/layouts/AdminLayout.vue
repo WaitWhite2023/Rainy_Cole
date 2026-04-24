@@ -6,6 +6,33 @@ import { useAuthStore } from '../stores/auth';
 const router = useRouter();
 const authStore = useAuthStore();
 const user = computed(() => authStore.user);
+const navItems = computed(() => {
+  const items = [
+    {
+      to: '/',
+      label: '仪表盘',
+      icon: 'M3 12h18M12 3v18'
+    },
+    {
+      to: '/posts',
+      label: '文章管理',
+      icon: 'M5 4h14a1 1 0 0 1 1 1v14H4V5a1 1 0 0 1 1-1zm2 4h10M7 12h10M7 16h6'
+    },
+    {
+      to: '/posts/new',
+      label: '新建文章',
+      icon: 'M12 5v14M5 12h14'
+    }
+  ];
+  if (user.value?.role === 'admin') {
+    items.push({
+      to: '/settings',
+      label: '站点设置',
+      icon: 'M12 7.5a4.5 4.5 0 1 1 0 9a4.5 4.5 0 0 1 0-9zm0-4.5v2m0 14v2m9-9h-2M5 12H3m15.364 6.364l-1.414-1.414M7.05 7.05L5.636 5.636m12.728 0L16.95 7.05M7.05 16.95l-1.414 1.414'
+    });
+  }
+  return items;
+});
 
 function handleLogout() {
   authStore.logout();
@@ -14,46 +41,50 @@ function handleLogout() {
 </script>
 
 <template>
-  <div class="admin-shell min-h-screen text-white">
-    <div class="admin-orb admin-orb-left"></div>
-    <div class="admin-orb admin-orb-right"></div>
-
-    <aside class="fixed inset-y-0 left-0 z-20 w-72 border-r border-white/8 bg-[rgba(8,10,15,0.82)] p-6 backdrop-blur-2xl">
-      <div class="rounded-[1.6rem] border border-white/8 bg-white/[0.035] p-5">
-        <p class="text-[11px] uppercase tracking-[0.38em] text-white/34">Admin</p>
-        <p class="mt-3 font-['Bodoni_Moda'] text-3xl text-white">Rainy Cole</p>
-        <p class="mt-4 text-sm text-white/48">{{ user?.nickname }} · {{ user?.role }}</p>
+  <div class="admin-shell">
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-card">
+        <p class="admin-brand">Rainy Cole</p>
+        <p class="admin-muted-copy">Content Admin Console</p>
+        <p class="admin-user-meta">{{ user?.nickname }} · {{ user?.role }}</p>
       </div>
 
-      <nav class="mt-8 space-y-2 text-sm">
-        <RouterLink to="/" class="admin-nav-link">仪表盘</RouterLink>
-        <RouterLink to="/posts" class="admin-nav-link">文章管理</RouterLink>
-        <RouterLink to="/posts/new" class="admin-nav-link">新建文章</RouterLink>
-        <RouterLink v-if="user?.role === 'admin'" to="/settings" class="admin-nav-link">站点设置</RouterLink>
+      <nav class="admin-nav">
+        <RouterLink
+          v-for="item in navItems"
+          :key="item.to"
+          :to="item.to"
+          class="admin-nav-link"
+        >
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path :d="item.icon" />
+          </svg>
+          <span>{{ item.label }}</span>
+        </RouterLink>
       </nav>
 
-      <div class="mt-10 rounded-[1.4rem] border border-white/8 bg-white/[0.035] p-5">
-        <p class="text-[11px] uppercase tracking-[0.32em] text-white/32">System</p>
-        <p class="mt-4 text-sm leading-7 text-white/54">
-          后台不只是内容入口，也是一套长期维护的工作面板。这里的界面语言应该和站点一样安静、清晰、有秩序。
-        </p>
-        <el-button class="mt-5 w-full" plain @click="handleLogout">退出登录</el-button>
+      <div class="admin-sidebar-foot">
+        <el-button class="w-full" plain @click="handleLogout">退出登录</el-button>
       </div>
     </aside>
 
-    <main class="ml-72 min-h-screen px-8 py-8">
-      <div class="mx-auto max-w-6xl">
-        <div class="admin-topbar mb-6 flex items-center justify-between rounded-[1.6rem] border border-white/8 px-5 py-4">
-          <div>
-            <p class="text-[11px] uppercase tracking-[0.32em] text-white/34">Content OS</p>
-            <p class="mt-2 text-sm text-white/58">一个更安静、可长期维护的内容后台。</p>
-          </div>
-          <div class="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-xs uppercase tracking-[0.25em] text-white/40">
-            Vue 3 · NestJS
+    <main class="admin-main">
+      <div class="admin-main-head">
+        <div class="admin-main-wrap">
+          <div class="admin-topbar">
+            <div class="admin-topbar-copy">
+              <p class="admin-topbar-title">内容管理后台</p>
+              <p class="admin-topbar-desc">统一维护文章、发布状态与站点配置。</p>
+            </div>
+            <div class="admin-chip">Vue 3 · TypeScript</div>
           </div>
         </div>
+      </div>
 
+      <div class="admin-main-content">
+        <div class="admin-main-wrap">
         <RouterView />
+        </div>
       </div>
     </main>
   </div>
