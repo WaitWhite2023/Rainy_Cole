@@ -13,6 +13,12 @@
 - `meilisearch`：全文搜索
 - `nginx`：统一入口与静态资源代理
 
+其中 `web`、`admin`、`api` 通过以下 Dockerfile 构建：
+
+- `infra/docker/Dockerfile.web`
+- `infra/docker/Dockerfile.admin`
+- `infra/docker/Dockerfile.api`
+
 ## 3. 路由规则
 
 - `/` -> `web`
@@ -30,6 +36,38 @@
 6. 若本机只有旧版 Compose，可改用 `docker-compose --env-file .env.docker -f infra/docker/docker-compose.yml up -d --build`
 7. 检查容器状态与 Nginx 代理结果
 8. 若需要从宿主机执行 Prisma 初始化，但数据库跑在 Docker 容器中，请使用 `pnpm db:setup:docker`
+
+若宿主机 `3000` 端口被占用，可临时改宿主映射端口启动（容器内端口仍是 `3000`）：
+
+```bash
+API_PORT=3001 docker compose --env-file .env.docker -f infra/docker/docker-compose.yml up -d --build
+```
+
+## 4.1 本地联调与验收演练（Day 6 / Day 7）
+
+1. 启动或更新容器
+
+```bash
+pnpm docker:up
+```
+
+2. 执行冒烟检查
+
+```bash
+pnpm docker:verify
+```
+
+3. 预期结果
+
+- `docker compose ps` 中 `web/admin/api/postgres/meilisearch/nginx` 均为 `Up`
+- `GET /api/health` 返回 `200` 且含 `"status":"ok"`
+- `HEAD /admin` 返回 `301`（重定向到 `/admin/`）
+- `HEAD /api` 返回 `301`（重定向到 `/api/`）
+
+4. 若出现 `502 Bad Gateway`
+
+- 先看 `api` 容器是否正常：`docker compose --env-file .env.docker -f infra/docker/docker-compose.yml logs --tail 50 api`
+- 若 `api` 刚被重建，重启一次 `nginx` 刷新上游：`docker compose --env-file .env.docker -f infra/docker/docker-compose.yml restart nginx`
 
 ## 5. 建议目录与挂载
 

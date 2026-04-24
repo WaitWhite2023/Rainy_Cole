@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue';
 import { RouterLink } from 'vue-router';
 import type { PostListItemDto } from '@rainy/shared';
 import { fetchPosts } from '../services/content';
+import { setSeo } from '../utils/seo';
 
 const loading = ref(false);
 const errorMessage = ref('');
@@ -10,6 +11,30 @@ const posts = ref<PostListItemDto[]>([]);
 
 const featuredPost = computed(() => posts.value[0] || null);
 const latestPosts = computed(() => posts.value.slice(1, 6));
+const recommendedPosts = computed(() => posts.value.slice(0, 3));
+const totalTagCount = computed(() => {
+  const allTags = new Set<string>();
+  for (const post of posts.value) {
+    for (const tag of post.tags) {
+      allTags.add(tag);
+    }
+  }
+  return allTags.size;
+});
+const tagCloud = computed(() => {
+  const counter = new Map<string, number>();
+
+  for (const post of posts.value) {
+    for (const tag of post.tags) {
+      counter.set(tag, (counter.get(tag) || 0) + 1);
+    }
+  }
+
+  return [...counter.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 16)
+    .map(([name, count]) => ({ name, count }));
+});
 
 function formatDate(value?: string) {
   if (!value) return 'Draft';
@@ -24,8 +49,18 @@ async function bootstrap() {
   errorMessage.value = '';
   try {
     posts.value = await fetchPosts();
+    setSeo({
+      title: 'Rainy Cole - 首页',
+      description: '最新文章、推荐阅读与标签云',
+      path: '/'
+    });
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '首页加载失败';
+    setSeo({
+      title: 'Rainy Cole - 首页',
+      description: '内容首页',
+      path: '/'
+    });
   } finally {
     loading.value = false;
   }
@@ -39,23 +74,22 @@ onMounted(bootstrap);
     <section class="hero-blue">
       <div class="content-wrap hero-grid">
         <div>
-          <p class="home-kicker">Editorial Archive</p>
-          <p class="home-kicker-sub">内容归档</p>
+          <p class="home-kicker">深度论述、长期存档</p>
           <h1 class="home-hero-title">
             Deep Essays
             <br />
             Long-term Archive
           </h1>
           <div class="mt-5 flex flex-wrap gap-3">
-            <RouterLink to="/posts" class="btn-secondary">Browse Posts</RouterLink>
-            <RouterLink to="/search" class="btn-secondary">Quick Search</RouterLink>
+            <RouterLink to="/posts" class="btn-secondary">浏览文章</RouterLink>
+            <RouterLink to="/search" class="btn-secondary">快速搜索</RouterLink>
           </div>
         </div>
 
         <div class="hero-stage">
           <div class="meta-rail">
-            <span class="meta-pill">{{ posts.length }} Posts</span>
-            <span class="meta-pill">{{ featuredPost?.categories?.[0] || 'Archive' }}</span>
+            <span class="meta-pill">已发布 {{ posts.length }} 篇</span>
+            <span class="meta-pill">标签 {{ totalTagCount }} 个</span>
           </div>
           <div class="media-frame">
             <img :src="featuredPost?.coverUrl || fallbackImage" :alt="featuredPost?.title || 'Featured image'" />
@@ -67,10 +101,10 @@ onMounted(bootstrap);
     <section class="band band-strong">
       <div class="content-wrap home-recent-grid">
         <div class="home-recent-head">
-          <p class="home-kicker">Recent Posts</p>
-          <h2 class="home-recent-title">Latest Updates</h2>
+          <p class="home-kicker home-kicker--recent">最新文章</p>
+          <h2 class="home-recent-title">最新更新</h2>
           <p class="home-recent-copy">
-            Start with title and summary, then open only the posts worth deep reading.
+            先看标题和摘要，再打开真正值得深读的内容。
           </p>
         </div>
 
@@ -89,7 +123,38 @@ onMounted(bootstrap);
             </article>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="page-band">
+      <div class="content-wrap space-y-5">
+        <p class="eyebrow">推荐阅读</p>
+        <div class="tile-grid">
+          <article v-for="post in recommendedPosts" :key="post.id" class="tile-card">
+            <p class="home-recommend-date">{{ formatDate(post.publishedAt) }}</p>
+            <RouterLink :to="`/posts/${post.slug}`">
+              <h2 class="list-title mt-3">{{ post.title }}</h2>
+            </RouterLink>
+            <p class="list-summary">{{ post.summary }}</p>
+          </article>
         </div>
+      </div>
+    </section>
+
+    <section class="page-band">
+      <div class="content-wrap space-y-5">
+        <p class="eyebrow">标签云</p>
+        <div class="chip-row">
+          <RouterLink
+            v-for="item in tagCloud"
+            :key="item.name"
+            class="chip-btn"
+            :to="`/posts?tag=${encodeURIComponent(item.name)}`"
+          >
+            {{ item.name }} · {{ item.count }}
+          </RouterLink>
+        </div>
+      </div>
     </section>
   </section>
 </template>

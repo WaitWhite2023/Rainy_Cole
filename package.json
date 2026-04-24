@@ -30,6 +30,7 @@
     "docker:deps:down": "docker compose --env-file .env.docker -f infra/docker/docker-compose.deps.yml down",
     "docker:up": "docker compose --env-file .env.docker -f infra/docker/docker-compose.yml up -d --build",
     "docker:down": "docker compose --env-file .env.docker -f infra/docker/docker-compose.yml down",
+    "docker:verify": "bash infra/docker/smoke-test.sh",
     "docker:up:legacy": "docker-compose --env-file .env.docker -f infra/docker/docker-compose.yml up -d --build",
     "docker:down:legacy": "docker-compose --env-file .env.docker -f infra/docker/docker-compose.yml down"
   },

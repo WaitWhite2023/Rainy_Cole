@@ -1,38 +1,121 @@
+<script setup lang="ts">
+import { computed, onMounted, ref } from 'vue';
+import type { SiteSettings } from '@rainy/shared';
+import { fetchSiteSettings } from '../services/content';
+import { setSeo } from '../utils/seo';
+
+type TestimonialItem = {
+  quote: string;
+  author: string;
+};
+
+const loading = ref(false);
+const errorMessage = ref('');
+const settings = ref<SiteSettings | null>(null);
+const activeIndex = ref(0);
+
+const testimonials = computed<TestimonialItem[]>(() => {
+  const siteName = settings.value?.siteName || 'Rainy Cole';
+  const aboutContent = settings.value?.aboutContent || '我们坚持内容优先、表达清晰、长期维护。';
+  const lines = aboutContent.split(/\n+/).map((item) => item.trim()).filter(Boolean);
+
+  const items = lines.map((line) => ({
+    quote: line,
+    author: siteName
+  }));
+
+  if (!items.length) {
+    return [
+      {
+        quote: '我们坚持内容优先、表达清晰、长期维护。',
+        author: siteName
+      }
+    ];
+  }
+
+  return items;
+});
+
+const activeTestimonial = computed(() => testimonials.value[activeIndex.value] || testimonials.value[0]);
+const socialLinks = computed(() => settings.value?.socialLinks || []);
+
+function prevTestimonial() {
+  const total = testimonials.value.length;
+  activeIndex.value = (activeIndex.value - 1 + total) % total;
+}
+
+function nextTestimonial() {
+  const total = testimonials.value.length;
+  activeIndex.value = (activeIndex.value + 1) % total;
+}
+
+async function bootstrap() {
+  loading.value = true;
+  errorMessage.value = '';
+  try {
+    settings.value = await fetchSiteSettings();
+    setSeo({
+      title: `${settings.value.siteName} - 关于`,
+      description: settings.value.seoDefaultDescription || settings.value.subtitle,
+      path: '/about'
+    });
+  } catch (error) {
+    errorMessage.value = error instanceof Error ? error.message : '加载失败';
+    setSeo({
+      title: '关于本站',
+      description: '关于本站',
+      path: '/about'
+    });
+  } finally {
+    loading.value = false;
+  }
+}
+
+onMounted(bootstrap);
+</script>
+
 <template>
-  <section>
-    <section class="page-hero">
-      <div class="page-hero-inner space-y-4">
-        <p class="page-kicker !text-[0.95rem] !font-bold tracking-[0.08em]">关于我们</p>
-        <h1 class="page-title !text-[clamp(2.4rem,5.2vw,4rem)] !leading-[0.94]">关于本站</h1>
-        <p class="page-copy !max-w-[38ch] !text-[1.08rem] !font-semibold !leading-[1.68]">
-          这是一个长期写作与工程实践并行的个人站点，核心目标是清晰表达、快速阅读与持续维护。
-        </p>
+  <section class="about-showcase">
+    <section class="about-hero">
+      <div class="content-wrap about-hero-inner">
+        <p class="about-contact-title">What Our Readers Say</p>
+        <p v-if="loading" class="about-quote">正在加载关于信息...</p>
+        <p v-else-if="errorMessage" class="about-quote">{{ errorMessage }}</p>
+        <template v-else>
+          <p class="about-quote">“{{ activeTestimonial.quote }}”</p>
+          <p class="about-author">{{ activeTestimonial.author }}</p>
+          <div class="about-nav">
+            <button class="about-nav-btn" type="button" @click="prevTestimonial" aria-label="previous">
+              ←
+            </button>
+            <button class="about-nav-btn" type="button" @click="nextTestimonial" aria-label="next">
+              →
+            </button>
+          </div>
+        </template>
       </div>
     </section>
 
-    <section class="page-band">
-      <div class="content-wrap list-shell">
-        <article class="list-row">
-          <p class="list-date">01</p>
-          <div class="list-body">
-            <h2 class="list-title">统一视觉语言</h2>
-            <p class="list-summary">前台页面使用一致的配色、字体层级与交互控件，减少跳转时的风格割裂感。</p>
-          </div>
-        </article>
-        <article class="list-row">
-          <p class="list-date">02</p>
-          <div class="list-body">
-            <h2 class="list-title">内容优先布局</h2>
-            <p class="list-summary">把阅读与检索作为主要流程，优先展示标题、摘要与时间信息，便于快速判断内容价值。</p>
-          </div>
-        </article>
-        <article class="list-row">
-          <p class="list-date">03</p>
-          <div class="list-body">
-            <h2 class="list-title">可扩展结构</h2>
-            <p class="list-summary">底层采用可复用的 Tailwind 组件层，后续扩展新页面时无需从头设计。</p>
-          </div>
-        </article>
+    <section class="about-contact">
+      <div class="about-grid-bg" aria-hidden="true"></div>
+      <div class="content-wrap about-contact-inner">
+        <p class="about-contact-title">Contact Us</p>
+        <p class="about-contact-item">{{ settings?.siteName || 'Rainy Cole' }}</p>
+        <p class="about-contact-item">{{ settings?.subtitle || '记录代码、生活与长期主义' }}</p>
+        <p class="about-contact-item">SEO Title: {{ settings?.seoDefaultTitle || '-' }}</p>
+        <p class="about-contact-item">SEO Description: {{ settings?.seoDefaultDescription || '-' }}</p>
+        <div v-if="socialLinks.length" class="about-links">
+          <a
+            v-for="(item, index) in socialLinks"
+            :key="`social-link-${index}`"
+            class="about-link"
+            :href="item.url"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ item.name || item.url }}
+          </a>
+        </div>
       </div>
     </section>
   </section>

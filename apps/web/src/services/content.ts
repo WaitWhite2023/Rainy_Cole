@@ -1,4 +1,4 @@
-import type { CategoryDto, PostDetailDto, PostListItemDto, TagDto } from '@rainy/shared';
+import type { CategoryDto, PostDetailDto, PostListItemDto, SiteSettings, TagDto } from '@rainy/shared';
 import { apiGet } from './api';
 
 export function fetchPosts() {
@@ -15,6 +15,10 @@ export function fetchCategories() {
 
 export function fetchTags() {
   return apiGet<TagDto[]>('/tags');
+}
+
+export function fetchSiteSettings() {
+  return apiGet<SiteSettings>('/site-settings');
 }
 
 export function searchPosts(keyword: string, options?: { category?: string; tag?: string; limit?: number }) {

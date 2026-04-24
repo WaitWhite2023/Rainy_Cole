@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router';
 import type { CategoryDto, PostListItemDto, TagDto } from '@rainy/shared';
 import { fetchCategories, fetchTags, searchPosts } from '../services/content';
 import AppSelect from '../components/AppSelect.vue';
+import { setSeo } from '../utils/seo';
 
 const keyword = ref('');
 const loading = ref(false);
@@ -16,12 +17,12 @@ const activeTag = ref('');
 const result = ref<{ total: number; hits: PostListItemDto[] }>({ total: 0, hits: [] });
 
 const categoryOptions = computed(() => [
-  { label: 'All categories', value: '' },
+  { label: '全部分类', value: '' },
   ...categories.value.map((item) => ({ label: item.name, value: item.name }))
 ]);
 
 const tagOptions = computed(() => [
-  { label: 'All tags', value: '' },
+  { label: '全部标签', value: '' },
   ...tags.value.map((item) => ({ label: item.name, value: item.name }))
 ]);
 
@@ -63,6 +64,11 @@ watch([keyword, activeCategory, activeTag], () => {
 });
 
 onMounted(async () => {
+  setSeo({
+    title: 'Rainy Cole - 搜索',
+    description: '按关键词、分类和标签搜索文章',
+    path: '/search'
+  });
   const [categoryList, tagList] = await Promise.all([fetchCategories(), fetchTags()]);
   categories.value = categoryList;
   tags.value = tagList;
@@ -73,13 +79,13 @@ onMounted(async () => {
   <section>
     <section class="page-hero">
       <div class="page-hero-inner space-y-5">
-        <p class="page-kicker">Search Panel</p>
+        <p class="page-kicker">搜索面板</p>
         <h1 class="page-title">Find Content</h1>
         <p class="page-copy !max-w-none whitespace-nowrap">输入关键词后，再结合分类和标签筛选，快速定位目标内容。</p>
         <div class="page-toolbar lg:grid-cols-[minmax(0,1.3fr)_minmax(0,0.9fr)_minmax(0,0.9fr)]">
-          <input v-model="keyword" class="page-field" placeholder="Type at least 2 characters..." />
-          <AppSelect v-model="activeCategory" :options="categoryOptions" placeholder="All categories" />
-          <AppSelect v-model="activeTag" :options="tagOptions" placeholder="All tags" />
+          <input v-model="keyword" class="page-field" placeholder="输入关键词..." />
+          <AppSelect v-model="activeCategory" :options="categoryOptions" placeholder="全部分类" />
+          <AppSelect v-model="activeTag" :options="tagOptions" placeholder="全部标签" />
         </div>
       </div>
     </section>

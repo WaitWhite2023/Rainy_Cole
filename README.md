@@ -51,3 +51,11 @@ pnpm dev:admin
 ```bash
 pnpm docker:deps:down
 ```
+
+若使用 Compose 全量联调，可执行：
+
+```bash
+pnpm docker:up
+pnpm docker:verify
+pnpm docker:down
+```

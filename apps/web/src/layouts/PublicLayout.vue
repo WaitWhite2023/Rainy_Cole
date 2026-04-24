@@ -4,10 +4,10 @@
       <div class="content-wrap flex flex-wrap items-center justify-between gap-4 py-5">
         <RouterLink to="/" class="brand">Rainy</RouterLink>
         <nav class="site-nav">
-          <RouterLink to="/" class="nav-link">Home</RouterLink>
-          <RouterLink to="/posts" class="nav-link">Posts</RouterLink>
-          <RouterLink to="/search" class="nav-link">Search</RouterLink>
-          <RouterLink to="/about" class="nav-link">About</RouterLink>
+          <RouterLink to="/" class="nav-link">首页</RouterLink>
+          <RouterLink to="/posts" class="nav-link">文章</RouterLink>
+          <RouterLink to="/search" class="nav-link">搜索</RouterLink>
+          <RouterLink to="/about" class="nav-link">关于</RouterLink>
         </nav>
       </div>
     </header>

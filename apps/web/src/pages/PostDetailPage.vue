@@ -3,6 +3,8 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { RouterLink, useRoute } from 'vue-router';
 import type { PostDetailDto } from '@rainy/shared';
 import { fetchPostDetail } from '../services/content';
+import { setSeo } from '../utils/seo';
+import { renderMarkdown } from '../utils/markdown';
 
 const route = useRoute();
 const loading = ref(false);
@@ -10,12 +12,7 @@ const errorMessage = ref('');
 const post = ref<PostDetailDto | null>(null);
 
 const slug = computed(() => String(route.params.slug || ''));
-const contentParagraphs = computed(() =>
-  (post.value?.content || '')
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-);
+const renderedContent = computed(() => renderMarkdown(post.value?.content || ''));
 
 const readingMinutes = computed(() => {
   const chars = (post.value?.content || '').length;
@@ -34,8 +31,19 @@ async function loadPost() {
   post.value = null;
   try {
     post.value = await fetchPostDetail(slug.value);
+    setSeo({
+      title: post.value.seoTitle || `${post.value.title} - Rainy Cole`,
+      description: post.value.seoDescription || post.value.summary,
+      path: `/posts/${post.value.slug}`,
+      image: post.value.coverUrl
+    });
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '文章加载失败';
+    setSeo({
+      title: '文章详情',
+      description: '文章详情页',
+      path: `/posts/${slug.value}`
+    });
   } finally {
     loading.value = false;
   }
@@ -78,7 +86,7 @@ watch(slug, loadPost);
         </aside>
 
         <section class="reading-panel">
-          <p v-for="(line, index) in contentParagraphs" :key="`${post.id}-${index}`">{{ line }}</p>
+          <div class="markdown-body" v-html="renderedContent"></div>
         </section>
       </div>
     </section>

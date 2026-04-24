@@ -9,7 +9,8 @@ const form = reactive({
   subtitle: '',
   aboutContent: '',
   seoDefaultTitle: '',
-  seoDefaultDescription: ''
+  seoDefaultDescription: '',
+  socialLinks: [] as Array<{ name: string; url: string }>
 });
 
 async function bootstrap() {
@@ -21,9 +22,18 @@ async function bootstrap() {
     form.aboutContent = settings.aboutContent;
     form.seoDefaultTitle = settings.seoDefaultTitle;
     form.seoDefaultDescription = settings.seoDefaultDescription;
+    form.socialLinks = Array.isArray(settings.socialLinks) ? [...settings.socialLinks] : [];
   } finally {
     loading.value = false;
   }
+}
+
+function addSocialLink() {
+  form.socialLinks.push({ name: '', url: '' });
+}
+
+function removeSocialLink(index: number) {
+  form.socialLinks.splice(index, 1);
 }
 
 async function handleSave() {
@@ -63,6 +73,24 @@ onMounted(() => {
         <el-form-item label="默认 SEO 描述">
           <el-input v-model="form.seoDefaultDescription" type="textarea" :rows="3" />
         </el-form-item>
+
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <p class="text-sm font-medium text-white/80">社交链接</p>
+            <el-button plain size="small" @click="addSocialLink">新增链接</el-button>
+          </div>
+          <div v-if="!form.socialLinks.length" class="text-sm text-white/50">暂无社交链接，点击“新增链接”添加。</div>
+          <div
+            v-for="(item, index) in form.socialLinks"
+            :key="`social-${index}`"
+            class="grid gap-2 rounded-xl border border-white/10 p-3 md:grid-cols-[1fr_2fr_auto]"
+          >
+            <el-input v-model="item.name" placeholder="名称，例如 GitHub" />
+            <el-input v-model="item.url" placeholder="链接，例如 https://github.com/xxx" />
+            <el-button type="danger" plain @click="removeSocialLink(index)">删除</el-button>
+          </div>
+        </div>
+
         <div class="flex justify-end">
           <el-button type="primary" @click="handleSave">保存设置</el-button>
         </div>
