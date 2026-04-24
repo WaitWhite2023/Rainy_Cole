@@ -5,6 +5,7 @@ const apiProxyTarget = process.env.VITE_API_PROXY_TARGET || 'http://localhost:30
 
 export default defineConfig({
   plugins: [vue()],
+  base: '/admin/',
   server: {
     port: 5174,
     strictPort: true,
