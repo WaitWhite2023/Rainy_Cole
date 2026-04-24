@@ -131,8 +131,7 @@ onMounted(bootstrap);
                 <div class="home-recent-meta">
                   <p class="home-recent-date">{{ formatDate(post.publishedAt) }}</p>
                   <img
-                    v-if="post.coverUrl"
-                    :src="post.coverUrl"
+                    :src="post.coverUrl || fallbackImage"
                     :alt="post.title"
                     class="home-recent-cover"
                   />

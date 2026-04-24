@@ -369,7 +369,7 @@ a {
 }
 
 .home-wrap {
-  max-width: 1200px;
+  max-width: var(--container);
 }
 
 .hero-kicker {
@@ -1127,7 +1127,7 @@ a {
   }
 
   .home-recent-date {
-    margin-top: 0;
+    margin-top: -0.28rem;
   }
 
   .home-recent-item-body {
