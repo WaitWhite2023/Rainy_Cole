@@ -15,51 +15,46 @@
 cp .env.example .env
 ```
 
-## 2. 本机或 CI 构建镜像
+## 2. 日常发布
+
+当前服务器部署方式：服务器拉取代码，然后在服务器上构建镜像并启动。
 
 ```bash
-docker compose --env-file .env -f infra/docker/docker-compose.prod.yml build
-```
-
-默认生成：
-
-- `rainy-cole-api:latest`
-- `rainy-cole-nginx:latest`
-
-如果要推送到镜像仓库：
-
-```bash
-docker tag rainy-cole-api:latest your-registry/rainy-cole-api:latest
-docker tag rainy-cole-nginx:latest your-registry/rainy-cole-nginx:latest
-
-docker push your-registry/rainy-cole-api:latest
-docker push your-registry/rainy-cole-nginx:latest
-```
-
-## 3. 服务器启动
-
-如果服务器直接从当前代码构建：
-
-```bash
+cd /srv/rainy-cole
+git pull
+pnpm install
 pnpm docker:prod
 ```
 
-如果服务器使用镜像仓库，在服务器 `.env` 中配置：
+`pnpm docker:prod` 会执行：
+
+- 构建 `rainy-cole-api:latest`
+- 构建 `rainy-cole-nginx:latest`
+- 启动 `api`、`nginx`、`postgres`、`meilisearch`
+
+## 3. 首次部署
+
+首次部署比日常发布多一步 `.env` 初始化：
 
 ```bash
-API_IMAGE=your-registry/rainy-cole-api:latest
-NGINX_IMAGE=your-registry/rainy-cole-nginx:latest
+cd /srv
+git clone <your-repo-url> rainy-cole
+cd /srv/rainy-cole
+cp .env.example .env
+pnpm install
+pnpm docker:prod
+pnpm db:deploy
 ```
 
-然后启动：
+如果需要初始化默认账号和基础数据：
 
 ```bash
-docker compose --env-file .env -f infra/docker/docker-compose.prod.yml up -d
+pnpm db:seed
 ```
 
 ## 4. 数据库迁移
 
-如果服务器保留源码和 pnpm 依赖，直接在项目根目录执行：
+每次涉及 Prisma schema 或数据库迁移后，执行：
 
 ```bash
 pnpm db:deploy
@@ -72,6 +67,21 @@ pnpm db:seed
 ```
 
 说明：这两个命令会读取项目根目录 `.env`。如果数据库跑在 compose 里的 `postgres` 容器，宿主机通过 `POSTGRES_PORT` 暴露的端口访问即可，默认是 `localhost:5432`。
+
+## 4.1 可选：镜像仓库发布
+
+当前不使用这套方式。后续如果改成 CI 构建镜像、服务器只拉镜像，可以在服务器 `.env` 中配置：
+
+```bash
+API_IMAGE=your-registry/rainy-cole-api:latest
+NGINX_IMAGE=your-registry/rainy-cole-nginx:latest
+```
+
+然后执行：
+
+```bash
+docker compose --env-file .env -f infra/docker/docker-compose.prod.yml up -d
+```
 
 ## 5. 发布后验证
 

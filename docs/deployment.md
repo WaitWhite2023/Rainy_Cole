@@ -83,7 +83,34 @@ pnpm docker:verify
 
 ## 6. 云服务器部署
 
-本地或 CI 构建并推送镜像：
+当前推荐方式：云服务器拉取代码，在服务器上构建生产镜像并启动。
+
+```bash
+cd /srv/rainy-cole
+git pull
+pnpm install
+pnpm docker:prod
+pnpm db:deploy
+pnpm docker:verify
+```
+
+`pnpm docker:prod` 会在服务器上构建：
+
+- `rainy-cole-api:latest`
+- `rainy-cole-nginx:latest`
+
+然后启动生产 compose。
+
+服务器安全组至少放行：
+
+- `8080`：当前 Nginx 对外端口
+- `80` / `443`：后续绑定域名和 HTTPS 时使用
+
+## 7. 可选：镜像仓库部署
+
+如果后续改成 CI 构建镜像、服务器只拉镜像，可以使用以下流程。
+
+构建并推送：
 
 ```bash
 docker compose --env-file .env -f infra/docker/docker-compose.prod.yml build
@@ -105,8 +132,3 @@ NGINX_IMAGE=your-registry/rainy-cole-nginx:latest
 ```bash
 docker compose --env-file .env -f infra/docker/docker-compose.prod.yml up -d
 ```
-
-服务器安全组至少放行：
-
-- `8080`：当前 Nginx 对外端口
-- `80` / `443`：后续绑定域名和 HTTPS 时使用

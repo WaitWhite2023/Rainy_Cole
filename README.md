@@ -56,6 +56,8 @@ pnpm docker:dev
 
 ## Docker 生产环境
 
+当前生产部署方式是：云服务器拉取代码，然后在服务器上执行部署命令。
+
 ```bash
 pnpm docker:prod
 ```
