@@ -27,6 +27,11 @@ RUN pnpm --filter @rainy/api build
 RUN pnpm --filter @rainy/web build
 RUN pnpm --filter @rainy/admin build
 RUN pnpm deploy --filter @rainy/api --prod --legacy /prod/api
+RUN set -eux; \
+    source_prisma="$(find /workspace/node_modules/.pnpm -path '*/node_modules/.prisma' -type d -print -quit)"; \
+    target_client="$(find /prod/api/node_modules/.pnpm -path '*/node_modules/@prisma/client/default.js' -type f -print -quit)"; \
+    target_node_modules="$(dirname "$(dirname "$(dirname "$target_client")")")"; \
+    cp -R "$source_prisma" "$target_node_modules/.prisma"
 
 FROM node:22-alpine AS api
 
