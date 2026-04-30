@@ -1,35 +1,87 @@
 services:
   web:
-    command: pnpm --filter @rainy/web dev --host 0.0.0.0 --port 5173
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile
+      target: deps
+    command: sh -c "pnpm --filter @rainy/shared build && pnpm --filter @rainy/web dev --host 0.0.0.0 --port 5173"
     environment:
+      VITE_API_PROXY_TARGET: http://api:3000
       CHOKIDAR_USEPOLLING: "true"
       CHOKIDAR_INTERVAL: "120"
+    ports:
+      - "${WEB_PORT:-5173}:5173"
     volumes:
       - ../../:/workspace
       - workspace_node_modules:/workspace/node_modules
       - pnpm_store:/root/.local/share/pnpm/store
 
   admin:
-    command: pnpm --filter @rainy/admin dev --host 0.0.0.0 --port 5174
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile
+      target: deps
+    command: sh -c "pnpm --filter @rainy/shared build && pnpm --filter @rainy/admin dev --host 0.0.0.0 --port 5174"
     environment:
+      VITE_API_PROXY_TARGET: http://api:3000
       CHOKIDAR_USEPOLLING: "true"
       CHOKIDAR_INTERVAL: "120"
+    ports:
+      - "${ADMIN_PORT:-5174}:5174"
     volumes:
       - ../../:/workspace
       - workspace_node_modules:/workspace/node_modules
       - pnpm_store:/root/.local/share/pnpm/store
 
   api:
-    command: pnpm --filter @rainy/api dev
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile
+      target: deps
+    command: sh -c "pnpm --filter @rainy/shared build && pnpm --filter @rainy/api prisma:generate && pnpm --filter @rainy/api dev"
     environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-rainy_cole}?schema=public
+      API_PORT: 3000
+      MEILI_HOST: http://meilisearch:7700
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-change-me-search}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-change-me-access}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-refresh}
+      UPLOAD_DIR: /workspace/apps/api/uploads
       CHOKIDAR_USEPOLLING: "true"
       CHOKIDAR_INTERVAL: "120"
+    depends_on:
+      - postgres
+      - meilisearch
+    ports:
+      - "${API_PORT:-3000}:3000"
     volumes:
       - ../../:/workspace
       - ../../apps/api/uploads:/workspace/apps/api/uploads
       - workspace_node_modules:/workspace/node_modules
       - pnpm_store:/root/.local/share/pnpm/store
 
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rainy_cole}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.15.2
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-change-me-search}
+    ports:
+      - "${MEILI_PORT:-7700}:7700"
+    volumes:
+      - meili_data:/meili_data
+
 volumes:
   workspace_node_modules:
   pnpm_store:
+  postgres_data:
+  meili_data:

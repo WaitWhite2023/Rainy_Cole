@@ -3,8 +3,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-COMPOSE_FILE="${ROOT_DIR}/infra/docker/docker-compose.yml"
-ENV_FILE="${ROOT_DIR}/.env.docker"
+COMPOSE_FILE="${ROOT_DIR}/infra/docker/docker-compose.prod.yml"
+ENV_FILE="${ROOT_DIR}/.env"
 BASE_URL="${BASE_URL:-http://localhost:8080}"
 
 if ! command -v docker >/dev/null 2>&1; then

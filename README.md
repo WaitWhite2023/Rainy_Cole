@@ -1,61 +1,111 @@
 # Rainy Cole Blog Monorepo
 
-个人博客 Monorepo 工程，包含：
+个人博客 Monorepo 工程，包含前台、后台、API、共享包与 Docker 部署配置。
 
-- `apps/web`：博客前台
-- `apps/admin`：后台管理
+## 目录说明
+
+- `apps/web`：博客前台，Vue 3 + Vite
+- `apps/admin`：后台管理，Vue 3 + Vite
 - `apps/api`：NestJS API
-- `packages/shared`：共享类型与常量
-- `packages/config`：共享配置
-- `content/posts`：Markdown 文章
-- `infra/docker`：Docker 与 Nginx 配置
+- `packages/shared`：共享 DTO、类型、常量
+- `packages/config`：共享 TypeScript / Tailwind / ESLint 配置
+- `infra/docker`：Docker Compose、Dockerfile、Nginx 配置
+- `docs`：需求、方案、部署说明
 
-文档优先，请先阅读 `docs/` 目录中的需求、方案与部署说明。
+## 环境配置
 
-## 本地开发（推荐）
-
-统一使用“本地跑应用 + Docker 跑依赖”：
-
-1. 启动基础依赖（默认只起 PostgreSQL）
+项目只保留一套配置模板：
 
 ```bash
-pnpm docker:deps:up
+cp .env.example .env
 ```
 
-如果需要验证 Meilisearch，再执行：
+- `.env.example`：配置模板，提交到仓库
+- `.env`：真实配置，本地和服务器运行时读取，不提交仓库
+
+Docker Compose 也读取 `.env`。容器内部的数据库和搜索地址由 compose 自动改成 `postgres`、`meilisearch`，不需要单独维护 `.env.docker`。
+
+## 常用命令
 
 ```bash
-pnpm docker:deps:up:search
+pnpm install
+pnpm dev
+pnpm build
+pnpm lint
+pnpm test
 ```
 
-2. 初始化数据库（首次或迁移后）
+说明：
+
+- `pnpm dev`：先构建 `@rainy/shared`，再并行启动 web/admin/api
+- `pnpm build`：按 workspace 依赖顺序构建 shared/api/web/admin
+
+## Docker 开发环境
 
 ```bash
-pnpm db:setup
+pnpm docker:dev
 ```
 
-3. 启动应用
-
-```bash
-pnpm dev:api
-pnpm dev:web
-pnpm dev:admin
-```
+启动后访问：
 
 - 前台：`http://localhost:5173`
-- 后台：`http://localhost:5174/admin/login`
+- 后台：`http://localhost:5174/admin/`
 - API：`http://localhost:3000/api/health`
 
-停止依赖服务：
+开发环境使用源码挂载和热更新，适合日常开发联调。
+
+## Docker 生产环境
 
 ```bash
-pnpm docker:deps:down
+pnpm docker:prod
 ```
 
-若使用 Compose 全量联调，可执行：
+启动后访问：
+
+- 站点：`http://localhost:8080/`
+- 后台：`http://localhost:8080/admin/`
+- API：`http://localhost:8080/api/health`
+
+生产环境会构建两个镜像：
+
+- `rainy-cole-api:latest`
+- `rainy-cole-nginx:latest`
+
+Nginx 容器托管前台和后台静态资源，并将 `/api/` 反向代理到 API 容器。
+
+停止生产环境：
 
 ```bash
-pnpm docker:up
-pnpm docker:verify
 pnpm docker:down
 ```
+
+冒烟检查：
+
+```bash
+pnpm docker:verify
+```
+
+## 数据库
+
+生成 Prisma Client：
+
+```bash
+pnpm db:generate
+```
+
+生产/容器环境执行迁移：
+
+```bash
+pnpm db:deploy
+```
+
+初始化种子数据：
+
+```bash
+pnpm db:seed
+```
+
+更多部署细节见：
+
+- `docs/deployment.md`
+- `docs/deploy-runbook.md`

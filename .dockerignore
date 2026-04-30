@@ -1,0 +1,16 @@
+node_modules
+**/node_modules
+dist
+**/dist
+.turbo
+coverage
+.git
+.DS_Store
+.env
+.env.local
+.env.production
+.env.docker
+.pnpm-store
+apps/api/generated
+apps/api/uploads
+infra/docker/data

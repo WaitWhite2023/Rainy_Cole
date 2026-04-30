@@ -1,0 +1,60 @@
+services:
+  api:
+    image: ${API_IMAGE:-rainy-cole-api:latest}
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile
+      target: api
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-rainy_cole}?schema=public
+      API_PORT: 3000
+      MEILI_HOST: http://meilisearch:7700
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-change-me-search}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-change-me-access}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-refresh}
+      UPLOAD_DIR: /app/uploads
+    depends_on:
+      - postgres
+      - meilisearch
+    volumes:
+      - api_uploads:/app/uploads
+    expose:
+      - "3000"
+
+  nginx:
+    image: ${NGINX_IMAGE:-rainy-cole-nginx:latest}
+    build:
+      context: ../../
+      dockerfile: infra/docker/Dockerfile
+      target: nginx
+    depends_on:
+      - api
+    ports:
+      - "${NGINX_PORT:-8080}:80"
+    volumes:
+      - api_uploads:/usr/share/nginx/html/uploads:ro
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-rainy_cole}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.15.2
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-change-me-search}
+    volumes:
+      - meili_data:/meili_data
+    ports:
+      - "${MEILI_PORT:-7700}:7700"
+
+volumes:
+  api_uploads:
+  postgres_data:
+  meili_data:
