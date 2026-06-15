@@ -2,110 +2,63 @@
 
 ## 1. 环境要求
 
-| 组件 | 版本 |
-|---|---|
-| Node.js | 22+ |
-| pnpm | 10+ |
-| PostgreSQL | 16 |
-| Meilisearch | 1.15+ |
-| Nginx | 1.27+ |
+| 组件 | 版本 | 说明 |
+|---|---|---|
+| Node.js | 22+ | NodeSource 源安装 |
+| pnpm | 10+ | `npm install -g pnpm` |
+| PostgreSQL | 13+ | 阿里云自带 13 可直接用 |
+| Meilisearch | 1.15+ | 二进制文件启动 |
+| Nginx | 1.x | 统一入口 |
 
 ---
 
 ## 2. 服务器环境安装
 
-以下提供 Ubuntu/Debian（apt）和 Alibaba Cloud Linux / CentOS（dnf）两种安装方式。
+### 2.1 Ubuntu/Debian
 
-### 2.1 Node.js + pnpm
-
-**Ubuntu/Debian：**
 ```bash
+# Node.js
 curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-sudo apt-get install -y nodejs
-corepack enable
-```
-
-**Alibaba Cloud Linux / CentOS：**
-```bash
-# 默认 dnf 源的 Node.js 版本偏旧，使用 NodeSource 官方 rpm 源
-curl -fsSL https://rpm.nodesource.com/setup_22.x | sudo bash -
-sudo dnf remove -y nodejs
-sudo dnf install -y nodejs
-node -v   # 确认 22.x
-
-# pnpm — 如果 corepack 不可用则直接用 npm 装
+sudo apt-get install -y nodejs nginx postgresql
 npm install -g pnpm
-```
 
-### 2.2 PostgreSQL
-
-**Ubuntu/Debian：**
-```bash
-sudo apt-get install -y postgresql-16
-sudo systemctl enable postgresql
-sudo systemctl start postgresql
-```
-
-**Alibaba Cloud Linux / CentOS（默认源只有 PG 13，需用官方仓库装 PG 16）：**
-```bash
-sudo dnf install -y https://download.postgresql.org/pub/repos/yum/reporpms/EL-8-x86_64/pgdg-redhat-repo-latest.noarch.rpm
-sudo dnf -y remove postgresql-server
-sudo dnf install -y postgresql16-server
-sudo /usr/pgsql-16/bin/postgresql-16-setup initdb
-sudo systemctl enable postgresql-16
-sudo systemctl start postgresql-16
-```
-
-**创建数据库和用户（通用）：**
-```bash
-# Alibaba Cloud Linux 需先加 PATH
-export PATH="/usr/pgsql-16/bin:$PATH"
-sudo -u postgres psql -c "CREATE USER postgres WITH PASSWORD 'your-password';"
+# PostgreSQL
+sudo systemctl enable postgresql && sudo systemctl start postgresql
+sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'your-password';"
 sudo -u postgres psql -c "CREATE DATABASE rainy_cole OWNER postgres;"
+
+# Meilisearch（本地下载后 scp 到 /usr/local/bin/meilisearch）
+sudo chmod +x /usr/local/bin/meilisearch
+nohup /usr/local/bin/meilisearch --master-key=your-master-key --http-addr 127.0.0.1:7700 > /dev/null 2>&1 &
+
+# Nginx
+sudo systemctl enable nginx && sudo systemctl start nginx
 ```
 
-### 2.3 Meilisearch（通用）
+### 2.2 Alibaba Cloud Linux / CentOS
 
 ```bash
-curl -L https://install.meilisearch.com | sh
-sudo mv meilisearch /usr/local/bin/
+# Node.js 22（卸载旧版，装新版）
+curl -fsSL https://rpm.nodesource.com/setup_22.x | sudo bash -
+sudo dnf remove -y nodejs && sudo dnf install -y nodejs
+npm install -g pnpm
 
-# 创建 systemd 服务
-sudo useradd -r meili
-sudo tee /etc/systemd/system/meilisearch.service << 'EOF'
-[Unit]
-Description=Meilisearch
-After=network.target
+# PostgreSQL（阿里云自带 13 已够用，直接启动）
+sudo systemctl enable postgresql && sudo systemctl start postgresql
+sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'your-password';"
+sudo -u postgres psql -c "CREATE DATABASE rainy_cole OWNER postgres;"
 
-[Service]
-ExecStart=/usr/local/bin/meilisearch --master-key=your-master-key
-Restart=always
-User=meili
-Environment=MEILI_HTTP_ADDR=127.0.0.1:7700
+# 如果 pg_hba.conf 导致连接拒绝，改为 trust：
+sudo sed -i 's/peer/trust/g; s/ident/trust/g; s/scram-sha-256/trust/g; s/md5/trust/g' /var/lib/pgsql/data/pg_hba.conf
+sudo systemctl restart postgresql
 
-[Install]
-WantedBy=multi-user.target
-EOF
+# Meilisearch（本地下载后 scp 到服务器 /usr/local/bin/meilisearch）
+sudo chmod +x /usr/local/bin/meilisearch
+nohup /usr/local/bin/meilisearch --master-key=your-master-key --http-addr 127.0.0.1:7700 > /dev/null 2>&1 &
 
-sudo systemctl enable meilisearch
-sudo systemctl start meilisearch
-```
-
-### 2.4 Nginx
-
-**Ubuntu/Debian：**
-```bash
-sudo apt-get install -y nginx
-sudo systemctl enable nginx
-sudo systemctl start nginx
-```
-
-**Alibaba Cloud Linux / CentOS（默认 dnf 源不含 nginx，需先启用 EPEL）：**
-```bash
-sudo dnf install -y epel-release
-sudo dnf install -y nginx
-sudo systemctl enable nginx
-sudo systemctl start nginx
+# Nginx（Alibaba Cloud Linux 可能 exclude 了 nginx）
+sudo dnf install -y --disableexcludes=all nginx
+sudo systemctl enable nginx && sudo systemctl start nginx
 ```
 
 ---
@@ -113,147 +66,134 @@ sudo systemctl start nginx
 ## 3. 项目部署
 
 ```bash
-cd /srv
-git clone <your-repo-url> rainy-cole
-cd /srv/rainy-cole
+git clone <your-repo-url> rainy-cole && cd rainy-cole
 
-# 配置环境变量
+# 环境变量
 cp .env.example .env
-# 编辑 .env，填入数据库密码、JWT 密钥、Meilisearch master key 等
+# 编辑 .env，必改项：
+#   DATABASE_URL=postgresql://postgres:your-password@localhost:5432/rainy_cole?schema=public
+#   MEILI_MASTER_KEY=your-master-key
+#   MEILI_HOST=http://localhost:7700
+#   UPLOAD_DIR=/var/www/rainy-cole/uploads
+#   JWT_ACCESS_SECRET=<随机字符串>
+#   JWT_REFRESH_SECRET=<随机字符串>
 
-# 安装依赖并构建
-pnpm install
-pnpm build
+# 构建
+pnpm install && pnpm build
+pnpm db:deploy && pnpm db:seed
 ```
 
-### 配置 Nginx
+### 3.1 配置 Nginx
 
-**Ubuntu/Debian：**
 ```bash
-sudo cp infra/nginx/rainy-cole.conf /etc/nginx/sites-available/rainy-cole
-sudo ln -sf /etc/nginx/sites-available/rainy-cole /etc/nginx/sites-enabled/
-# 如果存在默认站点，可移除
-sudo rm -f /etc/nginx/sites-enabled/default
-```
+# 将构建产物放到 nginx 可访问路径（不能用 /root，nginx 无权访问）
+sudo mkdir -p /var/www/rainy-cole/uploads
+sudo cp -r apps/web/dist/* /var/www/rainy-cole/
+sudo cp -r apps/admin/dist /var/www/rainy-cole/admin/
+sudo cp -r apps/api/uploads/* /var/www/rainy-cole/uploads/ 2>/dev/null
 
-**Alibaba Cloud Linux / CentOS：**
-```bash
+# 安装 nginx 配置
+# Ubuntu: /etc/nginx/sites-available/ → sites-enabled/
+# CentOS: /etc/nginx/conf.d/
 sudo cp infra/nginx/rainy-cole.conf /etc/nginx/conf.d/rainy-cole.conf
-# 如果存在默认 server 配置，可移除
+
+# 清理冲突配置
 sudo rm -f /etc/nginx/conf.d/default.conf
+sudo rm -f /etc/nginx/conf.d/website.conf
+# 如果 /etc/nginx/nginx.conf 里有默认 server 块，注释掉
+
+sudo nginx -t && sudo systemctl reload nginx
 ```
 
-**通用：**
-```bash
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-### 启动 API
+### 3.2 启动 API
 
 ```bash
-# 推荐使用 pm2 管理进程
 npm install -g pm2
 pm2 start apps/api/dist/src/main.js --name rainy-cole-api
-pm2 save
-pm2 startup
-```
-
----
-
-## 4. 数据库初始化
-
-```bash
-pnpm db:deploy
-pnpm db:seed
+pm2 save && pm2 startup
 ```
 
 默认管理员账号：`admin` / `123456`
 
 ---
 
+## 4. 验证
+
+```bash
+curl http://127.0.0.1:3000/api/health      # API
+curl http://127.0.0.1:80/api/health         # Nginx → API
+curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:80/       # 前台（应 200）
+curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:80/admin/ # 后台（应 200）
+```
+
+---
+
 ## 5. 路由规则
 
-- `/` → 博客前台静态资源
-- `/admin/` → 管理后台静态资源
-- `/api/` → 反向代理到 NestJS API（127.0.0.1:3000）
-- `/uploads/` → 上传文件目录
+| 路径 | 处理方式 |
+|---|---|
+| `/` | 静态文件 → `/var/www/rainy-cole/` |
+| `/admin/` | 静态文件 → `/var/www/rainy-cole/admin/` |
+| `/api/` | 反向代理 → `127.0.0.1:3000` |
+| `/uploads/` | 静态文件 → `/var/www/rainy-cole/uploads/` |
 
 ---
 
 ## 6. 日常发布
 
 ```bash
-cd /srv/rainy-cole
-git pull
-pnpm install
-pnpm build
-pm2 restart rainy-cole-api
+cd rainy-cole
+git pull && pnpm install && pnpm build && pm2 restart rainy-cole-api
+
+# 更新前端静态文件
+sudo cp -r apps/web/dist/* /var/www/rainy-cole/
+sudo cp -r apps/admin/dist /var/www/rainy-cole/admin/
 ```
 
-如果 Prisma schema 有变更，额外执行：
+Prisma schema 变更时：
+
 ```bash
 pnpm db:deploy
 ```
 
 ---
 
-## 7. 发布后验证
+## 7. 常见问题
+
+### 7.1 /api/ 502
 
 ```bash
-# 检查服务状态
-pm2 status
-sudo systemctl status nginx postgresql meilisearch
-
-# 验证 API
-curl -i http://127.0.0.1:3000/api/health
-
-# 验证 Nginx 代理
-curl -i http://127.0.0.1:80/api/health
-curl -i http://127.0.0.1:80/
-curl -i http://127.0.0.1:80/admin/
+pm2 status                    # API 是否在线
+sudo tail /var/log/nginx/error.log
+curl http://127.0.0.1:3000/api/health  # 绕过 nginx 直连
 ```
 
----
+### 7.2 前端 500 / 403
 
-## 8. 常见问题
+- 确认 `/var/www/rainy-cole/` 路径存在且 nginx 用户可读
+- 不要将代码放在 `/root` 下供 nginx 访问
+- 检查 `/etc/nginx/conf.d/` 是否有残留配置文件冲突
+- 检查 `/etc/nginx/nginx.conf` 是否有默认 server 块
 
-### 8.1 端口被占用
+### 7.3 上传图片 404
 
-`POSTGRES_PORT`、`API_PORT`、`MEILI_PORT` 可在 `.env` 中修改。
+- 确认 `UPLOAD_DIR=/var/www/rainy-cole/uploads`
+- 旧图片需手动拷贝到该目录
+- nginx 配置中 `location /uploads/` 的 alias 路径正确
 
-### 8.2 API 报数据库表不存在
+### 7.4 阿里云安全组
+
+控制台放行端口：**80**（HTTP）、**443**（HTTPS）
+
+数据库和 Meilisearch 只监听 `127.0.0.1`，不对公网开放。
+
+### 7.5 HTTPS
+
+获取证书后，在 nginx 配置中添加 SSL 指令，HTTP 80 重定向到 HTTPS 443。
+
+### 7.6 Meilisearch 重启
 
 ```bash
-pnpm db:deploy
+pkill meilisearch
+nohup /usr/local/bin/meilisearch --master-key=your-master-key --http-addr 127.0.0.1:7700 > /dev/null 2>&1 &
 ```
-
-### 8.3 /admin/ 刷新 404
-
-检查 Nginx 配置中 admin location 的 `try_files` 是否包含 `/admin/index.html` 回退。
-
-### 8.4 /api/ 502
-
-检查 API 进程：
-```bash
-pm2 status
-```
-
-查看 Nginx 日志：
-```bash
-sudo tail -f /var/log/nginx/error.log
-```
-
-检查 `.env` 中 `DATABASE_URL`、`JWT_ACCESS_SECRET`、`MEILI_MASTER_KEY` 是否正确。
-
-### 8.5 阿里云安全组
-
-在阿里云控制台安全组中放行端口：
-- `80`（Nginx HTTP）
-- `443`（如需 HTTPS）
-
-数据库端口（5432）和 Meilisearch 端口（7700）仅监听 `127.0.0.1`，无需对公网开放。
-
-### 8.6 HTTPS 配置
-
-获取 SSL 证书后，在 Nginx 配置中添加 SSL 相关指令，并将 HTTP 80 重定向到 HTTPS 443。
