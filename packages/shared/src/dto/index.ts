@@ -1,28 +1,57 @@
-import type { PostSourceType, PostStatus, UserRole } from '../enums';
+import {
+  IsArray,
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  POST_STATUSES,
+  POST_SOURCE_TYPES,
+  type PostSourceType,
+  type PostStatus,
+  type UserRole,
+} from '../enums';
 
-export interface LoginDto {
+// ── Auth ──
+
+export class LoginDto {
+  @IsString()
+  @IsNotEmpty()
   username: string;
+
+  @IsString()
+  @IsNotEmpty()
   password: string;
 }
 
-export interface RefreshTokenDto {
+export class RefreshTokenDto {
+  @IsString()
+  @IsNotEmpty()
   refreshToken: string;
 }
 
-export interface AuthUserDto {
+export class AuthUserDto {
   id: string;
   username: string;
   nickname: string;
   role: UserRole;
 }
 
-export interface AuthTokensDto {
+export class AuthTokensDto {
   accessToken: string;
   refreshToken: string;
+
+  @ValidateNested()
+  @Type(() => AuthUserDto)
   user: AuthUserDto;
 }
 
-export interface PostListItemDto {
+// ── Posts ──
+
+export class PostListItemDto {
   id: string;
   title: string;
   slug: string;
@@ -35,7 +64,7 @@ export interface PostListItemDto {
   publishedAt?: string;
 }
 
-export interface PostDetailDto extends PostListItemDto {
+export class PostDetailDto extends PostListItemDto {
   content: string;
   seoTitle?: string;
   seoDescription?: string;
@@ -43,40 +72,119 @@ export interface PostDetailDto extends PostListItemDto {
   viewCount: number;
 }
 
-export interface CreatePostDto {
+export class CreatePostDto {
+  @IsString()
+  @IsNotEmpty()
   title: string;
+
+  @IsString()
+  @IsNotEmpty()
   slug: string;
+
+  @IsString()
+  @IsNotEmpty()
   summary: string;
+
+  @IsString()
+  @IsNotEmpty()
   content: string;
+
+  @IsOptional()
+  @IsString()
   coverUrl?: string;
+
+  @IsIn(POST_STATUSES)
   status: PostStatus;
+
+  @IsIn(POST_SOURCE_TYPES)
   sourceType: PostSourceType;
+
+  @IsArray()
+  @IsString({ each: true })
   tagIds: string[];
+
+  @IsArray()
+  @IsString({ each: true })
   categoryIds: string[];
 }
 
-export interface UpdatePostDto extends Partial<CreatePostDto> {}
+export class UpdatePostDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
 
-export interface CategoryDto {
+  @IsOptional()
+  @IsString()
+  slug?: string;
+
+  @IsOptional()
+  @IsString()
+  summary?: string;
+
+  @IsOptional()
+  @IsString()
+  content?: string;
+
+  @IsOptional()
+  @IsString()
+  coverUrl?: string;
+
+  @IsOptional()
+  @IsIn(POST_STATUSES)
+  status?: PostStatus;
+
+  @IsOptional()
+  @IsIn(POST_SOURCE_TYPES)
+  sourceType?: PostSourceType;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  tagIds?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  categoryIds?: string[];
+}
+
+// ── Taxonomy ──
+
+export class CategoryDto {
   id: string;
   name: string;
   slug: string;
 }
 
-export interface TagDto {
+export class TagDto {
   id: string;
   name: string;
   slug: string;
 }
 
-export interface CreateTaxonomyDto {
+export class CreateTaxonomyDto {
+  @IsString()
+  @IsNotEmpty()
   name: string;
+
+  @IsString()
+  @IsNotEmpty()
   slug: string;
 }
 
-export interface UpdateTaxonomyDto extends Partial<CreateTaxonomyDto> {}
+export class UpdateTaxonomyDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
 
-export interface UserSummaryDto {
+  @IsOptional()
+  @IsString()
+  slug?: string;
+}
+
+// ── Users ──
+
+export class UserSummaryDto {
   id: string;
   username: string;
   nickname: string;

@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type { CreatePostDto, PostDetailDto, PostListItemDto, UpdatePostDto } from '@rainy/shared';
+import { CreatePostDto, PostDetailDto, PostListItemDto, UpdatePostDto } from '@rainy/shared';
 import type { CurrentUserPayload } from '../../common/decorators/current-user.decorator';
 import { PrismaService } from '../../common/prisma/prisma.service';
 import { SearchService } from '../search/search.service';
@@ -11,6 +11,7 @@ export class PostsService {
     private readonly searchService: SearchService
   ) {}
 
+  /** Get all published posts ordered by isTop desc, then publishedAt desc */
   async findAll(): Promise<PostListItemDto[]> {
     const posts = await this.prisma.post.findMany({
       where: {
@@ -35,6 +36,7 @@ export class PostsService {
     return posts.map((post) => this.toListItem(post));
   }
 
+  /** Get all posts including drafts, ordered by updatedAt desc */
   async findAdminAll(): Promise<PostListItemDto[]> {
     const posts = await this.prisma.post.findMany({
       include: {
@@ -56,6 +58,7 @@ export class PostsService {
     return posts.map((post) => this.toListItem(post));
   }
 
+  /** Get a single post by ID with tagIds and categoryIds for admin editing */
   async findAdminOne(id: string): Promise<PostDetailDto & { tagIds: string[]; categoryIds: string[] }> {
     const post = await this.prisma.post.findUnique({
       where: { id },
@@ -85,6 +88,7 @@ export class PostsService {
     };
   }
 
+  /** Get a single published post by slug */
   async findOne(slug: string): Promise<PostDetailDto> {
     const post = await this.prisma.post.findUnique({
       where: { slug },
@@ -110,6 +114,7 @@ export class PostsService {
     return this.toDetailItem(post);
   }
 
+  /** Create a new post and sync to search index */
   async create(payload: CreatePostDto, user?: CurrentUserPayload) {
     if (!user?.sub) {
       throw new NotFoundException('Authenticated user not found');
@@ -161,6 +166,7 @@ export class PostsService {
     return this.toDetailItem(post);
   }
 
+  /** Update a post and re-sync to search index */
   async update(id: string, payload: UpdatePostDto) {
     const existingPost = await this.prisma.post.findUnique({
       where: { id }
@@ -242,6 +248,7 @@ export class PostsService {
     return this.toDetailItem(updatedPost);
   }
 
+  /** Delete a post and its relations, then remove from search index */
   async remove(id: string) {
     const existingPost = await this.prisma.post.findUnique({
       where: { id }

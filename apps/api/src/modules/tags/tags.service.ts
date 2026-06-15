@@ -1,5 +1,5 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
-import type { CreateTaxonomyDto, TagDto, UpdateTaxonomyDto } from '@rainy/shared';
+import { CreateTaxonomyDto, TagDto, UpdateTaxonomyDto } from '@rainy/shared';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 @Injectable()

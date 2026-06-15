@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { MeiliSearch } from 'meilisearch';
-import type { PostListItemDto } from '@rainy/shared';
+import { PostListItemDto } from '@rainy/shared';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 type SearchDocument = {

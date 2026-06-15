@@ -1,5 +1,6 @@
 import { Controller, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { extname, join } from 'path';
 import { mkdirSync } from 'fs';
 import { diskStorage } from 'multer';
@@ -12,11 +13,28 @@ const uploadDir = process.env.UPLOAD_DIR || './apps/api/uploads';
 
 mkdirSync(uploadDir, { recursive: true });
 
+@ApiTags('Upload')
 @Controller('admin/upload')
 export class UploadController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin', 'editor')
+  @ApiOperation({ summary: 'Upload a file' })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary'
+        }
+      }
+    }
+  })
+  @ApiBearerAuth()
+  @ApiResponse({ status: 200, description: 'File uploaded successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({

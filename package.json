@@ -11,10 +11,7 @@
     "db:generate": "pnpm --filter @rainy/api prisma:generate",
     "db:deploy": "DOTENV_CONFIG_PATH=../../.env pnpm --filter @rainy/api prisma:deploy",
     "db:seed": "DOTENV_CONFIG_PATH=../../.env pnpm --filter @rainy/api prisma:seed",
-    "docker:dev": "docker compose --env-file .env -f infra/docker/docker-compose.dev.yml up -d",
-    "docker:prod": "docker compose --env-file .env -f infra/docker/docker-compose.prod.yml up -d --build",
-    "docker:down": "docker compose --env-file .env -f infra/docker/docker-compose.prod.yml down",
-    "docker:verify": "bash infra/docker/smoke-test.sh"
+    "start:api": "node apps/api/dist/src/main.js"
   },
   "devDependencies": {
     "prettier": "^3.3.3",

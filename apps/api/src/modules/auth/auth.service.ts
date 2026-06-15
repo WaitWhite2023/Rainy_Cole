@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Prisma } from '@prisma/client';
-import type { AuthTokensDto, LoginDto } from '@rainy/shared';
+import { AuthTokensDto, LoginDto } from '@rainy/shared';
 import { UsersService } from '../users/users.service';
 import { verifyPassword } from '../../common/utils/password.util';
 
@@ -16,6 +16,7 @@ export class AuthService {
     private readonly usersService: UsersService
   ) {}
 
+  /** Verify credentials and issue JWT tokens */
   async login(payload: LoginDto): Promise<AuthTokensDto> {
     let user;
 
@@ -49,6 +50,7 @@ export class AuthService {
     });
   }
 
+  /** Validate refresh token and issue a new token pair */
   async refresh(refreshToken: string): Promise<AuthTokensDto> {
     try {
       const payload = await this.jwtService.verifyAsync(refreshToken, {

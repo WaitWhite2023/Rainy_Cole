@@ -1,134 +1,214 @@
-# Docker 与 Nginx 部署说明
+# 服务器部署说明
 
-## 1. 环境文件
+## 1. 环境要求
 
-项目只保留一套模板：
+| 组件 | 版本 |
+|---|---|
+| Node.js | 22+ |
+| pnpm | 10+ |
+| PostgreSQL | 16 |
+| Meilisearch | 1.15+ |
+| Nginx | 1.27+ |
 
-- `.env.example`：配置模板，可以提交到仓库，不放真实密钥
-- `.env`：本地/服务器真实配置，不提交仓库
+---
 
-初始化配置：
+## 2. 服务器环境安装
+
+### Node.js + pnpm
 
 ```bash
+# 安装 Node.js 22（以 Ubuntu 为例，或通过 nvm）
+curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+sudo apt-get install -y nodejs
+
+# 启用 corepack（ pnpm 随 Node.js 22 内置）
+corepack enable
+```
+
+### PostgreSQL 16
+
+```bash
+sudo apt-get install -y postgresql-16
+sudo systemctl enable postgresql
+sudo systemctl start postgresql
+
+# 创建数据库和用户
+sudo -u postgres psql -c "CREATE USER postgres WITH PASSWORD 'your-password';"
+sudo -u postgres psql -c "CREATE DATABASE rainy_cole OWNER postgres;"
+```
+
+### Meilisearch
+
+```bash
+# 下载并安装
+curl -L https://install.meilisearch.com | sh
+sudo mv meilisearch /usr/local/bin/
+
+# 创建 systemd 服务
+sudo tee /etc/systemd/system/meilisearch.service << 'EOF'
+[Unit]
+Description=Meilisearch
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/meilisearch --master-key=your-master-key
+Restart=always
+User=meili
+Environment=MEILI_HTTP_ADDR=127.0.0.1:7700
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo useradd -r meili
+sudo systemctl enable meilisearch
+sudo systemctl start meilisearch
+```
+
+### Nginx
+
+```bash
+sudo apt-get install -y nginx
+sudo systemctl enable nginx
+sudo systemctl start nginx
+```
+
+---
+
+## 3. 项目部署
+
+```bash
+# 拉取代码
+cd /srv
+git clone <your-repo-url> rainy-cole
+cd /srv/rainy-cole
+
+# 配置环境变量
 cp .env.example .env
+# 编辑 .env，填入数据库密码、JWT 密钥、Meilisearch 密钥等
+
+# 安装依赖并构建
+pnpm install
+pnpm build
 ```
 
-Docker Compose 也读取 `.env`。容器内的 `DATABASE_URL` 和 `MEILI_HOST` 由 compose 自动改成 `postgres`、`meilisearch`，所以不需要再维护 `.env.docker`。
-
-## 2. 服务清单
-
-- `web`：博客前台，生产环境构建为静态资源
-- `admin`：后台管理，生产环境构建为静态资源
-- `api`：NestJS 服务
-- `postgres`：数据库
-- `meilisearch`：全文搜索
-- `nginx`：统一入口，托管静态资源并反向代理 API
-
-## 3. 开发环境
-
-开发环境使用源码挂载和热更新：
+### 配置 Nginx
 
 ```bash
-pnpm docker:dev
+sudo cp infra/nginx/rainy-cole.conf /etc/nginx/sites-available/rainy-cole
+sudo ln -s /etc/nginx/sites-available/rainy-cole /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl reload nginx
 ```
 
-入口：
-
-- 前台：`http://localhost:5173`
-- 后台：`http://localhost:5174/admin/`
-- API：`http://localhost:3000/api/`
-
-对应文件：
-
-- `infra/docker/docker-compose.dev.yml`
-- `infra/docker/Dockerfile`
-
-## 4. 生产环境
-
-生产环境构建两个镜像：
-
-- `rainy-cole-api:latest`
-- `rainy-cole-nginx:latest`
-
-启动：
+### 启动 API
 
 ```bash
-pnpm docker:prod
+# 直接启动（开发/调试用）
+pnpm start:api
+
+# 推荐使用 pm2 管理进程
+npm install -g pm2
+pm2 start apps/api/dist/src/main.js --name rainy-cole-api
+pm2 save
+pm2 startup
 ```
 
-停止：
+---
+
+## 4. 数据库初始化
 
 ```bash
-pnpm docker:down
+# 执行迁移
+pnpm db:deploy
+
+# 初始化种子数据（管理员账号、示例内容）
+pnpm db:seed
 ```
 
-冒烟检查：
+默认管理员账号：`admin` / `123456`
 
-```bash
-pnpm docker:verify
-```
-
-对应文件：
-
-- `infra/docker/docker-compose.prod.yml`
-- `infra/docker/Dockerfile`
-- `infra/docker/nginx/default.conf`
+---
 
 ## 5. 路由规则
 
-- `/` -> web 静态资源
-- `/admin/` -> admin 静态资源
-- `/api/` -> api 容器
-- `/uploads/` -> 上传文件 volume
+- `/` → 博客前台静态资源
+- `/admin/` → 管理后台静态资源
+- `/api/` → 反向代理到 NestJS API（127.0.0.1:3000）
+- `/uploads/` → 上传文件目录
 
-## 6. 云服务器部署
+---
 
-当前推荐方式：云服务器拉取代码，在服务器上构建生产镜像并启动。
+## 6. 日常发布
 
 ```bash
 cd /srv/rainy-cole
 git pull
 pnpm install
-pnpm docker:prod
+pnpm build
+pm2 restart rainy-cole-api
+```
+
+如果 Prisma schema 有变更，额外执行：
+
+```bash
 pnpm db:deploy
-pnpm docker:verify
 ```
 
-`pnpm docker:prod` 会在服务器上构建：
+---
 
-- `rainy-cole-api:latest`
-- `rainy-cole-nginx:latest`
-
-然后启动生产 compose。
-
-服务器安全组至少放行：
-
-- `8080`：当前 Nginx 对外端口
-- `80` / `443`：后续绑定域名和 HTTPS 时使用
-
-## 7. 可选：镜像仓库部署
-
-如果后续改成 CI 构建镜像、服务器只拉镜像，可以使用以下流程。
-
-构建并推送：
+## 7. 发布后验证
 
 ```bash
-docker compose --env-file .env -f infra/docker/docker-compose.prod.yml build
-docker tag rainy-cole-api:latest your-registry/rainy-cole-api:latest
-docker tag rainy-cole-nginx:latest your-registry/rainy-cole-nginx:latest
-docker push your-registry/rainy-cole-api:latest
-docker push your-registry/rainy-cole-nginx:latest
+# 检查服务状态
+pm2 status
+sudo systemctl status nginx postgresql meilisearch
+
+# 验证 API
+curl -i http://127.0.0.1:3000/api/health
+
+# 验证 Nginx 代理
+curl -i http://127.0.0.1:80/api/health
+curl -i http://127.0.0.1:80/
+curl -i http://127.0.0.1:80/admin/
 ```
 
-服务器 `.env` 中覆盖镜像地址：
+---
 
+## 8. 常见问题
+
+### 8.1 端口被占用
+
+`POSTGRES_PORT`、`API_PORT`、`MEILI_PORT` 可在 `.env` 中修改。
+
+### 8.2 API 报数据库表不存在
+
+执行迁移：
 ```bash
-API_IMAGE=your-registry/rainy-cole-api:latest
-NGINX_IMAGE=your-registry/rainy-cole-nginx:latest
+pnpm db:deploy
 ```
 
-服务器启动：
+### 8.3 /admin/ 刷新 404
 
+检查 `/etc/nginx/sites-enabled/rainy-cole` 中 admin location 的 `try_files` 是否包含 `/admin/index.html` 回退。
+
+### 8.4 /api/ 502
+
+检查 API 进程是否存活：
 ```bash
-docker compose --env-file .env -f infra/docker/docker-compose.prod.yml up -d
+pm2 status
 ```
+
+检查 Nginx 错误日志：
+```bash
+sudo tail -f /var/log/nginx/error.log
+```
+
+重点检查 `.env` 中：
+- `DATABASE_URL` 是否能连到 PostgreSQL
+- `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET` 是否已配置
+- `MEILI_MASTER_KEY` 是否与 Meilisearch 一致
+
+### 8.5 HTTPS 配置
+
+获取 SSL 证书后，在 Nginx 配置中添加 SSL 相关指令，并将 HTTP 80 端口重定向到 HTTPS 443。

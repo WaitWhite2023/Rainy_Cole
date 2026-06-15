@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { UserSummaryDto } from '@rainy/shared';
+import { UserSummaryDto } from '@rainy/shared';
 import { PrismaService } from '../../common/prisma/prisma.service';
 
 @Injectable()
