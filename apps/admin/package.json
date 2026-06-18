@@ -10,6 +10,7 @@
     "test": "echo \"No tests yet\""
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
     "@rainy/shared": "workspace:*",
     "element-plus": "^2.8.2",
     "md-editor-v3": "^6.4.2",
