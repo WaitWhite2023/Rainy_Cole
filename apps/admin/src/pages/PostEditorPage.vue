@@ -281,8 +281,9 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="摘要">
           <el-input v-model="form.summary" type="textarea" :rows="3" />
+        </el-form-item>
+        <div class="mb-4">
           <el-button
-            class="mt-2"
             type="primary"
             plain
             :disabled="!form.content.trim() || aiLoading"
@@ -291,7 +292,7 @@ onMounted(() => {
           >
             {{ aiLoading ? '⏳ 生成中…' : '✨ AI 生成摘要' }}
           </el-button>
-        </el-form-item>
+        </div>
         <el-form-item label="正文（Markdown）">
           <MdEditor
             v-model="form.content"
