@@ -282,10 +282,10 @@ onMounted(() => {
         <el-form-item label="摘要">
           <el-input v-model="form.summary" type="textarea" :rows="3" />
         </el-form-item>
-        <div class="mb-4">
+        <div class="ai-summary-bar">
+          <span class="ai-summary-hint">试试让 AI 帮你写摘要 →</span>
           <el-button
             type="primary"
-            plain
             :disabled="!form.content.trim() || aiLoading"
             :loading="aiLoading"
             @click="handleGenerateSummary"
