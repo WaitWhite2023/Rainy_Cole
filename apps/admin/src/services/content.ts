@@ -54,6 +54,10 @@ export function updateSiteSettings(payload: Record<string, unknown>) {
   return apiPatch<SiteSettings>('/site-settings/admin', payload, true);
 }
 
+export function generateSummary(content: string) {
+  return apiPost<{ summary: string }>('/admin/ai/summarize', { content }, true)
+}
+
 export function uploadAsset(file: File) {
   const formData = new FormData();
   formData.append('file', file);

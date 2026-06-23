@@ -13,6 +13,7 @@ import {
   fetchAdminPost,
   fetchCategories,
   fetchTags,
+  generateSummary,
   updatePost,
   uploadAsset
 } from '../services/content';
@@ -22,6 +23,7 @@ const route = useRoute();
 const postId = route.params.id as string | undefined;
 const isEdit = Boolean(postId);
 const loading = ref(false);
+const aiLoading = ref(false);
 const categories = ref<CategoryDto[]>([]);
 const tags = ref<TagDto[]>([]);
 const newCategory = reactive({ name: '', slug: '' });
@@ -91,6 +93,24 @@ async function handleSubmit() {
   }
 
   router.push('/posts');
+}
+
+async function handleGenerateSummary() {
+  if (!form.content.trim()) {
+    ElMessage.warning('请先填写文章内容')
+    return
+  }
+
+  aiLoading.value = true
+  try {
+    const result = await generateSummary(form.content)
+    form.summary = result.summary
+    ElMessage.success('摘要已生成，可继续修改')
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '摘要生成失败')
+  } finally {
+    aiLoading.value = false
+  }
 }
 
 async function handleUpload(event: Event) {
@@ -261,6 +281,16 @@ onMounted(() => {
         </el-form-item>
         <el-form-item label="摘要">
           <el-input v-model="form.summary" type="textarea" :rows="3" />
+          <el-button
+            class="mt-2"
+            type="primary"
+            plain
+            :disabled="!form.content.trim() || aiLoading"
+            :loading="aiLoading"
+            @click="handleGenerateSummary"
+          >
+            {{ aiLoading ? '⏳ 生成中…' : '✨ AI 生成摘要' }}
+          </el-button>
         </el-form-item>
         <el-form-item label="正文（Markdown）">
           <MdEditor

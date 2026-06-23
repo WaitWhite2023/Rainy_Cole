@@ -10,6 +10,7 @@ import { TagsModule } from './modules/tags/tags.module';
 import { SiteModule } from './modules/site/site.module';
 import { SearchModule } from './modules/search/search.module';
 import { ContentSyncModule } from './modules/content-sync/content-sync.module';
+import { AiModule } from './modules/ai/ai.module';
 import { UploadModule } from './modules/upload/upload.module';
 import { UsersModule } from './modules/users/users.module';
 import { RolesModule } from './modules/roles/roles.module';
@@ -27,7 +28,8 @@ import { RolesModule } from './modules/roles/roles.module';
     UploadModule,
     SiteModule,
     SearchModule,
-    ContentSyncModule
+    ContentSyncModule,
+    AiModule
   ],
   controllers: [AppController],
   providers: [AppService]
